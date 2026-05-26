@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-cart-plus"></i>
-        {{ $headTitle }}</h1>
+        {{ $head_title }}</h1>
     <div class="card mb-3">
         <div class="card-body">
             <h2 class="text-info fw-bold"><i class="fa-solid fa-duotone fa-user-tag"></i> ¿QUÉ EMPLEADO ESTÁ REALIZANDO ESTA

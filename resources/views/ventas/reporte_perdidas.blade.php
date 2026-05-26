@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="text-center text-danger fw-bold"><i class="fa-solid fa-duotone fa-chart-line-down"></i>
-        {{ $headTitle }}</h1>
+        {{ $head_title }}</h1>
 
     <p>Nota: las ventas que se muestran solo serán aquellas que no se deba saldo.</p>
 
@@ -122,7 +122,7 @@
                         className: 'btn btn-warning'
                     },
                 ],
-                @include('datatables.dataTablesLanguageProperty')
+                @include('datatables.datatables_language_property')
             }).buttons().container().appendTo('#dataTableExportButtonsContainer');
         });
     </script>

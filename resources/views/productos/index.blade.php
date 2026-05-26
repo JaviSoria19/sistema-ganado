@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-boxes-stacked"></i>
-        {{ $headTitle }}</h1>
+        {{ $head_title }}</h1>
 
     <div class="mb-3">
         <a class="btn btn-success" href="{{ route('abastecimientos.create') }}"><i class="fa-solid fa-duotone fa-plus"></i>

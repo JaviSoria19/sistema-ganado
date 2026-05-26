@@ -18,7 +18,7 @@ class SaldoEmpresaController extends Controller
         $empresas = (new Empresa())->getAllEmpresas();
 
         return view('saldos_empresas.index', [
-            'headTitle' => 'GESTIÓN DE SALDOS DE EMPRESAS',
+            'head_title' => 'GESTIÓN DE SALDOS DE EMPRESAS',
             'empresas' => $empresas,
         ]);
     }

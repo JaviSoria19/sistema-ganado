@@ -15,7 +15,7 @@ class EmpresaController extends Controller
         }
 
         return view('empresas.index', [
-            'headTitle' => 'GESTIÓN DE EMPRESAS'
+            'head_title' => 'GESTIÓN DE EMPRESAS'
         ]);
     }
 

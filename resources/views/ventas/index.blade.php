@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-cart-shopping"></i>
-        {{ $headTitle }}</h1>
+        {{ $head_title }}</h1>
 
     <a href="{{ route('ventas.crear') }}" class="btn btn-success mb-3 btn-crear" target="_blank" rel="noopener noreferrer"><i
             class="fa-solid fa-duotone fa-cart-plus"></i> Crear venta</a>
@@ -241,7 +241,7 @@
                     targets: [8, 11, 12, 13], // Target the first and third columns (0-indexed)
                     visible: false
                 }, ], */
-                @include('datatables.dataTablesLanguageProperty')
+                @include('datatables.datatables_language_property')
             }).buttons().container().appendTo('#dataTableExportButtonsContainer');
         });
     </script>

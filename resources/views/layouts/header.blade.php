@@ -36,8 +36,8 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('productos') ? 'active' : '' }}" aria-current="page"
-                            href="{{ route('productos.index') }}"><i class="fa-solid fa-duotone fa-frame"></i>
+                        <a class="nav-link {{ request()->is('potreros') ? 'active' : '' }}" aria-current="page"
+                            href="{{ route('potreros.index') }}"><i class="fa-solid fa-duotone fa-frame"></i>
                             Potreros</a>
                     </li>
                 </ul>

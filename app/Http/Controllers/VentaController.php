@@ -28,7 +28,7 @@ class VentaController extends Controller
         }
 
         return view('ventas.index', [
-            'headTitle' => 'GESTIÓN DE VENTAS',
+            'head_title' => 'GESTIÓN DE VENTAS',
             'fechaInicio' => $fechaInicio,
             'fechaFin' => $fechaFin,
         ]);
@@ -44,7 +44,7 @@ class VentaController extends Controller
         $parametro = (new Parametro())->get_parametro();
 
         return view('ventas.create', [
-            'headTitle' => 'CREAR VENTA',
+            'head_title' => 'CREAR VENTA',
             'empleados' => $empleados,
             'parametro' => $parametro,
         ]);
@@ -61,7 +61,7 @@ class VentaController extends Controller
         $parametro = (new Parametro())->get_parametro();
 
         return view('ventas.update', [
-            'headTitle' => 'EDITAR VENTA N°' . $venta->idVenta,
+            'head_title' => 'EDITAR VENTA N°' . $venta->idVenta,
             'empleados' => $empleados,
             'parametro' => $parametro,
             'venta' => $venta,
@@ -92,7 +92,7 @@ class VentaController extends Controller
         }
 
         if (session('id_usuario') != 1){
-            return view('403')->with('headTitle', 'ACCESO NO AUTORIZADO');
+            return view('403')->with('head_title', 'ACCESO NO AUTORIZADO');
         }
 
         $fechaInicio = $request->fechaInicio ? $request->fechaInicio : date('Y-m-d', strtotime('-1 months'));
@@ -142,7 +142,7 @@ class VentaController extends Controller
             ->count('dv.idProducto');
 
         return view('ventas.reporte_utilidades', [
-            'headTitle' => 'REPORTE UTILIDADES',
+            'head_title' => 'REPORTE UTILIDADES',
             'ventasSinSaldo' => $ventasSinSaldo,
             'ventasConSaldo' => $ventasConSaldo,
             'utilidadVentasSinSaldo' => $utilidadVentasSinSaldo,
@@ -163,7 +163,7 @@ class VentaController extends Controller
         }
 
         if (session('id_usuario') != 1){
-            return view('403')->with('headTitle', 'ACCESO NO AUTORIZADO');
+            return view('403')->with('head_title', 'ACCESO NO AUTORIZADO');
         }
 
         $fechaInicio = $request->fechaInicio ? $request->fechaInicio : date('Y-m-d', strtotime('-1 months'));
@@ -176,7 +176,7 @@ class VentaController extends Controller
         $ventas = (new Venta())->getVentasPorEstadoYSaldo('1', '<=', '0', 'DESC', $fechaInicio, $fechaFin);
 
         return view('ventas.reporte_perdidas', [
-            'headTitle' => 'REPORTE PERDIDAS',
+            'head_title' => 'REPORTE PERDIDAS',
             'ventas' => $ventas,
             'fechaInicio' => $fechaInicio,
             'fechaFin' => $fechaFin,

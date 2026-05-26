@@ -133,7 +133,7 @@
                     className: 'btn btn-warning'
                 },
             ],
-            @include('datatables.dataTablesLanguageProperty')
+            @include('datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer');
 
         $(document).on('click', '.btn-crear', function() {

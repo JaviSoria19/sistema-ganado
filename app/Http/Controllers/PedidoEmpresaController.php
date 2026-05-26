@@ -22,7 +22,7 @@ class PedidoEmpresaController extends Controller
         $productos = (new Producto())->getAllProductosGroupByNombreProducto();
 
         return view('pedidos_empresas.index', [
-            'headTitle' => 'GESTIÓN DE PEDIDOS A EMPRESAS',
+            'head_title' => 'GESTIÓN DE PEDIDOS A EMPRESAS',
             'empresas' => $empresas,
             'productos' => $productos,
         ]);

@@ -31,12 +31,12 @@
 <script>
     $(document).ready(function() {
         $('#dataTable').DataTable({
-            @include('datatables.dataTablesGlobalProperties')
-            @include('datatables.dataTablesLanguageProperty')
+            @include('components.datatables.datatables_global_properties')
+            @include('components.datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer');
         $('#dataTable2').DataTable({
-            @include('datatables.dataTablesGlobalProperties')
-            @include('datatables.dataTablesLanguageProperty')
+            @include('components.datatables.datatables_global_properties')
+            @include('components.datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer2');
     });
 </script>

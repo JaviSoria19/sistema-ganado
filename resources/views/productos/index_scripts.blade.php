@@ -435,17 +435,17 @@
                     className: 'btn btn-warning'
                 },
             ],
-            @include('datatables.dataTablesLanguageProperty')
+            @include('datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer');
 
         $("#dataTable2").DataTable({
-            @include('datatables.dataTablesGlobalProperties')
-            @include('datatables.dataTablesLanguageProperty')
+            @include('datatables.datatables_global_properties')
+            @include('datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer2');
 
         $("#dataTable3").DataTable({
-            @include('datatables.dataTablesGlobalProperties')
-            @include('datatables.dataTablesLanguageProperty')
+            @include('datatables.datatables_global_properties')
+            @include('datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTableExportButtonsContainer3');
 
         $(document).on('click', '.btn-crear', function() {

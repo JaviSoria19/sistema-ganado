@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ helper_tituloPagina() }} | {{ $headTitle }}</title>
+    <title>{{ helper_tituloPagina() }} | {{ $head_title }}</title>
     <!-- Icono -->
     <link rel="icon" type="image/x-icon" href="{{ URL::to('/') }}/public/favicon.ico">
     <!-- Token para formularios -->

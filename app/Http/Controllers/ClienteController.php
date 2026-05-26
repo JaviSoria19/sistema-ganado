@@ -15,7 +15,7 @@ class ClienteController extends Controller
         }
 
         return view('clientes.index', [
-            'headTitle' => 'GESTIÓN DE CLIENTES'
+            'head_title' => 'GESTIÓN DE CLIENTES'
         ]);
     }
 

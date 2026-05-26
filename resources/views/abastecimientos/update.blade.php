@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-cart-flatbed-boxes"></i> {{ $headTitle }} N°
+    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-cart-flatbed-boxes"></i> {{ $head_title }} N°
         {{ $abastecimiento->idAbastecimiento }}</h1>
 
     <div class="mb-3">

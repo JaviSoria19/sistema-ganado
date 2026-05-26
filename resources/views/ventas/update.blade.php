@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="text-center text-info fw-bold">
-        <i class="fa-solid fa-duotone fa-edit"></i> {{ $headTitle }}<br>
+        <i class="fa-solid fa-duotone fa-edit"></i> {{ $head_title }}<br>
         <span class="text-danger">{{ $venta->estado == '0' ? '(VENTA ELIMINADA)' : '' }}</span>
     </h1>
     <div class="card mb-3">

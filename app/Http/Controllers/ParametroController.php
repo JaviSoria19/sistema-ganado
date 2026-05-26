@@ -16,7 +16,7 @@ class ParametroController extends Controller
         $parametro = (new Parametro())->get_parametro();
 
         return view('parametros.index', [
-            'headTitle' => 'PARÁMETROS',
+            'head_title' => 'PARÁMETROS',
             'parametro' => $parametro,
         ]);
     }

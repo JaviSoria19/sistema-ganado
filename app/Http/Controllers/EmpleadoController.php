@@ -15,7 +15,7 @@ class EmpleadoController extends Controller
         }
 
         return view('empleados.index', [
-            'headTitle' => 'GESTIÓN DE EMPLEADOS'
+            'head_title' => 'GESTIÓN DE EMPLEADOS'
         ]);
     }
 

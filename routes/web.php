@@ -8,6 +8,7 @@ use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\PedidoEmpresaController;
+use App\Http\Controllers\PotreroController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\SaldoEmpresaController;
 use App\Http\Controllers\UsuarioController;
@@ -46,6 +47,17 @@ Route::controller(UsuarioController::class)->group(function () {
     Route::post('usuarios', 'create')->name('usuarios.create');
     Route::put('usuarios/{usuario}', 'update')->name('usuarios.update');
     Route::patch('usuarios/{usuario}', 'deleteOrRestore')->name('usuarios.deleteOrRestore');
+});
+
+Route::controller(PotreroController::class)->group(function () {
+    Route::get('potreros', 'view_index')->name('potreros.index');
+    Route::get('potreros/listar', 'listar')->name('potreros.listar');
+    Route::get('potreros/{potrero}', 'mostrar')->name('potreros.mostrar');
+    Route::post('potreros', 'create')->name('potreros.create');
+    Route::put('potreros/{potrero}', 'update')->name('potreros.update');
+    Route::patch('potreros/{potrero}', 'delete')->name('potreros.delete');
+
+    Route::get('potreros/{potrero}/detalles', 'view_details')->name('potreros.detalles');
 });
 
 Route::controller(EmpleadoController::class)->group(function () {

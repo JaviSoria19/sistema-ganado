@@ -29,7 +29,7 @@ class UsuarioController extends Controller
         }
 
         return view('panel.admin', [
-            'headTitle' => 'PANEL DE ADMINISTRACIÓN',
+            'head_title' => 'PANEL DE ADMINISTRACIÓN',
         ]);
     }
 
@@ -39,7 +39,7 @@ class UsuarioController extends Controller
             return redirect()->route('login');
         }
         return view('usuarios.index', [
-            'headTitle' => 'GESTIÓN DE USUARIOS',
+            'head_title' => 'GESTIÓN DE USUARIOS',
         ]);
     }
 

@@ -50,7 +50,7 @@
 
 <div class="row">
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
-        <a class="btn btn-sq-lg btn-primary" href="{{ route('ventas.crear') }}">
+        <a class="btn btn-sq-lg btn-primary" href="{{ route('potreros.index') }}">
             <div>
                 <i class="fa-solid fa-duotone fa-frame fa-2xl"></i><br />Potreros
             </div>

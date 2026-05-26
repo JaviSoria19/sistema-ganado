@@ -15,7 +15,7 @@ class MarcaController extends Controller
         }
 
         return view('marcas.index', [
-            'headTitle' => 'GESTIÓN DE MARCAS'
+            'head_title' => 'GESTIÓN DE MARCAS'
         ]);
     }
 

@@ -29,7 +29,7 @@ class ProductoController extends Controller
         $marcas = (new Marca())->getAllMarcas();
 
         return view('productos.index', [
-            'headTitle' => 'GESTIÓN DE PRODUCTOS',
+            'head_title' => 'GESTIÓN DE PRODUCTOS',
             'productos' => $productos,
             'productos_cantidades_disponibles' => $productos_cantidades_disponibles,
             'productos_cantidades_disponibles_color' => $productos_cantidades_disponibles_color,

@@ -24,7 +24,7 @@ class AbastecimientoController extends Controller
         $productos = (new Producto())->getAllProductosGroupByNombreProducto();
 
         return view('abastecimientos.index', [
-            'headTitle' => 'GESTIÓN DE ABASTECIMIENTOS',
+            'head_title' => 'GESTIÓN DE ABASTECIMIENTOS',
             'parametro' => $parametro,
             'empresas' => $empresas,
             'marcas' => $marcas,
@@ -45,7 +45,7 @@ class AbastecimientoController extends Controller
         $productos = (new Producto())->getAllProductosGroupByNombreProducto();
 
         return view('abastecimientos.update', [
-            'headTitle' => 'ACTUALIZAR ABASTECIMIENTO',
+            'head_title' => 'ACTUALIZAR ABASTECIMIENTO',
             'abastecimiento' => $abastecimiento,
             'parametro' => $parametro,
             'empresas' => $empresas,
