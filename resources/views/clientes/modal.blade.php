@@ -9,13 +9,13 @@
             </div>
             <div class="modal-body">
                 <form id="formCreateOrEdit">
-                    <!-- input de idCliente en caso de editar -->
-                    <input type="hidden" name="idCliente" value="0">
+                    <!-- input de id_cliente en caso de editar -->
+                    <input type="hidden" name="id_cliente" value="0">
 
                     <div class="mb-3">
-                        <label for="nombreCliente" class="form-label">Nombre de cliente <span
+                        <label for="nombre" class="form-label">Nombre de cliente <span
                                 class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="nombreCliente" name="nombreCliente" required>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
                     </div>
 
                     <div class="mb-3">
@@ -24,15 +24,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="cedulaIdentidad" class="form-label">Cédula de Identidad <span
+                        <label for="estancia" class="form-label">Estancia <span
                                 class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="cedulaIdentidad" name="cedulaIdentidad" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="procedencia" class="form-label">Procedencia <span
-                                class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="procedencia" name="procedencia" required>
+                        <input type="text" class="form-control" id="estancia" name="estancia" required>
                     </div>
                 </form>
             </div>

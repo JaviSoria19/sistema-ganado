@@ -22,10 +22,9 @@ class ClienteValidation extends FormRequest
     public function rules(): array
     {
         return [
-            'nombreCliente' => ['required', 'string', 'min:3', 'max:255'],
+            'nombre' => ['required', 'string', 'min:1', 'max:150'],
             'celular' => ['required', 'string', 'min:1', 'max:20'],
-            'cedulaIdentidad' => ['required', 'string', 'min:1', 'max:30'],
-            'procedencia' => ['required', 'string', 'min:1', 'max:100'],     
+            'estancia' => ['required', 'string', 'min:1', 'max:100'],     
         ];
     }
 }

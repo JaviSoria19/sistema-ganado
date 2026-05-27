@@ -298,7 +298,7 @@
 
                 Swal.fire({
                     title: `¡ATENCIÓN!`,
-                    text: `¿Estás seguro de ${accion} el usuario ${nombre}?`,
+                    html: `¿Estás seguro de <b>${accion}</b> el usuario <b class="text-primary">${nombre}</b>?`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',

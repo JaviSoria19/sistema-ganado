@@ -43,7 +43,7 @@ class Venta extends Model
     /** Relación FK con clientes */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idCliente', 'idCliente');
+        return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
     }
 
     /** Relación FK con empleados */
@@ -133,18 +133,18 @@ class Venta extends Model
     {
         return Venta::select(
             'empleados.nombreEmpleado',
-            'clientes.idCliente',
+            'clientes.id_cliente',
             'clientes.nombreCliente',
             'clientes.celular',
             'clientes.procedencia',
             DB::raw('SUM(ventas.saldoUSD) as saldoPendiente'),
             DB::raw('MIN(ventas.fecha_registro) as fechaMasAntigua')
         )
-            ->join('clientes', 'ventas.idCliente', '=', 'clientes.idCliente')
+            ->join('clientes', 'ventas.id_cliente', '=', 'clientes.id_cliente')
             ->join('empleados', 'ventas.idEmpleado', '=', 'empleados.idEmpleado')
             ->where('ventas.estado', 1)
             ->where('ventas.saldoUSD', '>', 0)
-            ->groupBy('clientes.idCliente', 'clientes.nombreCliente', 'clientes.celular')
+            ->groupBy('clientes.id_cliente', 'clientes.nombreCliente', 'clientes.celular')
             ->orderByDesc('saldoPendiente')
             ->get();
     }
@@ -154,7 +154,7 @@ class Venta extends Model
         return Venta::with(['productos.marca', 'pagos', 'usuario', 'cliente', 'empleado', 'editor'])
             ->where('ventas.estado', 1)
             ->where('ventas.saldoUSD', '>', 0)
-            ->orderBy('ventas.idCliente', 'ASC')
+            ->orderBy('ventas.id_cliente', 'ASC')
             ->orderBy('ventas.fecha_registro', 'ASC')
             ->get();
     }

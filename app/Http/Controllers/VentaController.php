@@ -216,7 +216,7 @@ class VentaController extends Controller
         }
 
         $request->validate([
-            'idCliente'   => 'required|integer|exists:clientes,idCliente',
+            'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
             'productos'   => 'required|array|min:1',
             'productos.*.idProducto' => 'required|integer|exists:productos,idProducto',
@@ -248,7 +248,7 @@ class VentaController extends Controller
         try {
             $venta = new Venta();
             $venta->id_usuario = session('id_usuario');
-            $venta->idCliente = $request->idCliente;
+            $venta->id_cliente = $request->id_cliente;
             $venta->idEmpleado = $request->idEmpleado;
             $venta->modificado_por = session('id_usuario');
             $venta->totalUSD = $request->totalUSD;
@@ -301,7 +301,7 @@ class VentaController extends Controller
         }
 
         $request->validate([
-            'idCliente'   => 'required|integer|exists:clientes,idCliente',
+            'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
             'productos'   => 'required|array|min:1',
             'productos.*.idProducto' => 'required|integer|exists:productos,idProducto',
@@ -311,7 +311,7 @@ class VentaController extends Controller
         DB::beginTransaction();
         try {
             $venta = (new Venta())->getVenta($idVenta);
-            $venta->idCliente = $request->idCliente;
+            $venta->id_cliente = $request->id_cliente;
             $venta->idEmpleado = $request->idEmpleado;
             $venta->modificado_por = session('id_usuario');
             $venta->totalUSD = $request->totalUSD;

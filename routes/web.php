@@ -60,6 +60,15 @@ Route::controller(PotreroController::class)->group(function () {
     Route::get('potreros/{potrero}/detalles', 'view_details')->name('potreros.detalles');
 });
 
+Route::controller(ClienteController::class)->group(function () {
+    Route::get('clientes', 'view_index')->name('clientes.index');
+    Route::get('clientes/listar', 'listar')->name('clientes.listar');
+    Route::get('clientes/{cliente}', 'mostrar')->name('clientes.mostrar');
+    Route::post('clientes', 'create')->name('clientes.create');
+    Route::put('clientes/{cliente}', 'update')->name('clientes.update');
+    Route::patch('clientes/{cliente}', 'delete')->name('clientes.delete');
+});
+
 
 
 
@@ -87,14 +96,7 @@ Route::controller(MarcaController::class)->group(function () {
     Route::patch('marcas/{marca}', 'deleteOrRestore')->name('marcas.deleteOrRestore');
 });
 
-Route::controller(ClienteController::class)->group(function () {
-    Route::get('clientes', 'view_index')->name('clientes.index');
-    Route::get('clientes/listar', 'listarClientes')->name('clientes.listar');
-    Route::get('clientes/{cliente}', 'mostrarCliente')->name('clientes.mostrar');
-    Route::post('clientes', 'create')->name('clientes.create');
-    Route::put('clientes/{cliente}', 'update')->name('clientes.update');
-    Route::patch('clientes/{cliente}', 'deleteOrRestore')->name('clientes.deleteOrRestore');
-});
+
 
 Route::controller(EmpresaController::class)->group(function () {
     Route::get('empresas', 'view_index')->name('empresas.index');

@@ -39,7 +39,7 @@
 
             <div class="mb-3 col-4">
                 <label for="cliente" class="form-label">Cliente <span class="text-danger">*</span></label><br>
-                <select style="width: 100%" class="form-select" id="cliente" name="idCliente" required>
+                <select style="width: 100%" class="form-select" id="cliente" name="id_cliente" required>
                 </select>
             </div>
 

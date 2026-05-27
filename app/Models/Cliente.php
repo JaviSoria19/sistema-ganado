@@ -10,23 +10,34 @@ class Cliente extends Model
     use HasFactory;
 
     protected $table = 'clientes';
-    protected $primaryKey = 'idCliente';
+    protected $primaryKey = 'id_cliente';
 
     const CREATED_AT = 'fecha_registro';
     const UPDATED_AT = 'fecha_actualizacion';
-    
+
     /** Relación con atributo de auditoría */
-    public function editor(){
+    public function creado()
+    {
+        return $this->belongsTo(Usuario::class, 'creado_por', 'id_usuario');
+    }
+
+    public function modificado()
+    {
         return $this->belongsTo(Usuario::class, 'modificado_por', 'id_usuario');
     }
-    
-    public function getAllClientes()
+
+    public function eliminado()
     {
-        return Cliente::with('editor')->orderBy('idCliente','ASC')->get();
+        return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
-    
-    public function getCliente($idCliente)
+
+    public function get_all_clientes()
     {
-        return Cliente::with('editor')->find($idCliente);
+        return Cliente::with('creado', 'modificado', 'eliminado')->orderBy('id_cliente', 'ASC')->get();
+    }
+
+    public function get_cliente($id_cliente)
+    {
+        return Cliente::with('creado', 'modificado', 'eliminado')->find($id_cliente);
     }
 }

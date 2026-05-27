@@ -28,7 +28,7 @@
                         if (cliente.estado == '0') return; // Omitir clientes inactivos
 
                         $select.append(
-                            `<option value="${cliente.idCliente}">
+                            `<option value="${cliente.id_cliente}">
                         ${cliente.nombreCliente} - CI: ${cliente.cedulaIdentidad} - Cel: ${cliente.celular} - Procedencia: ${cliente.procedencia}
                     </option>`
                         );
@@ -47,7 +47,7 @@
         recargarClientesSelect();
 
         $(document).on('click', '.btn-crear', function() {
-            $('#formCreateOrEdit input[name="idCliente"]').val(0);
+            $('#formCreateOrEdit input[name="id_cliente"]').val(0);
             $('#formCreateOrEdit input[name="nombreCliente"]').val('');
             $('#formCreateOrEdit input[name="celular"]').val('');
             $('#formCreateOrEdit input[name="cedulaIdentidad"]').val('');
@@ -73,7 +73,7 @@
             }
 
             $.get("{{ route('clientes.index') . '/' }}" + id, function(cliente) {
-                $('#formCreateOrEdit input[name="idCliente"]').val(cliente.data.idCliente);
+                $('#formCreateOrEdit input[name="id_cliente"]').val(cliente.data.id_cliente);
                 $('#formCreateOrEdit input[name="nombreCliente"]').val(cliente.data
                     .nombreCliente);
                 $('#formCreateOrEdit input[name="celular"]').val(cliente.data.celular);
@@ -89,13 +89,13 @@
         });
 
         $(document).on('click', '#btnGuardar', function() {
-            const idCliente = $('#formCreateOrEdit input[name="idCliente"]').val();
-            const url = idCliente == 0 ?
+            const id_cliente = $('#formCreateOrEdit input[name="id_cliente"]').val();
+            const url = id_cliente == 0 ?
                 "{{ route('clientes.create') }}" // POST -> crear
                 :
-                "{{ route('clientes.index') . '/' }}" + idCliente; // PUT -> actualizar
+                "{{ route('clientes.index') . '/' }}" + id_cliente; // PUT -> actualizar
 
-            const type = idCliente == 0 ? 'POST' : 'PUT';
+            const type = id_cliente == 0 ? 'POST' : 'PUT';
 
             $.ajax({
                 url: url,
@@ -108,7 +108,7 @@
                     if (response.success) {
                         Swal.fire('Éxito', response.message, 'success');
                         $('#modalCreateOrEdit').modal('hide');
-                        recargarClientesSelect(response.cliente.idCliente);
+                        recargarClientesSelect(response.cliente.id_cliente);
                     } else {
                         Swal.fire('Error', response.message, 'error');
                     }
@@ -401,7 +401,7 @@
         $("#btnCrearVenta").on("click", function() {
 
             const idEmpleado = $('#empleado').val();
-            const idCliente = $('#cliente').val();
+            const id_cliente = $('#cliente').val();
             let productos = [];
             let pagos = [];
 
@@ -434,7 +434,7 @@
                 return;
             }
 
-            if (!idCliente) {
+            if (!id_cliente) {
                 Swal.fire({
                     theme: "auto",
                     title: "¡No válido!",
@@ -467,7 +467,7 @@
                     cancelButtonText: "No, cancelar"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        registrarVentaAJAX(idEmpleado, idCliente, productos, pagos);
+                        registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos);
                     }
                 });
             } else {
@@ -483,13 +483,13 @@
                     cancelButtonText: "No, cancelar"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        registrarVentaAJAX(idEmpleado, idCliente, productos, pagos);
+                        registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos);
                     }
                 });
             }
         });
 
-        function registrarVentaAJAX(idEmpleado, idCliente, productos, pagos) {
+        function registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos) {
             const btnCrearVenta = document.getElementById('btnCrearVenta');
             const _totalUSD = document.getElementById('totalUSD');
             const _value_totalUSD = parseFloat(_totalUSD.textContent);
@@ -501,8 +501,8 @@
 
             /*console.log('idEmpleado');
             console.log(idEmpleado);
-            console.log('idCliente');
-            console.log(idCliente);
+            console.log('id_cliente');
+            console.log(id_cliente);
             console.log('_value_totalUSD');
             console.log(_value_totalUSD);
             console.log('_value_saldoUSD');
@@ -521,7 +521,7 @@
                 },
                 data: {
                     id_usuario: '{{ session('id_usuario') }}',
-                    idCliente: idCliente,
+                    id_cliente: id_cliente,
                     idEmpleado: idEmpleado,
                     totalUSD: _value_totalUSD,
                     saldoUSD: _value_saldoUSD,

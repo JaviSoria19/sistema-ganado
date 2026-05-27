@@ -16,7 +16,15 @@
     </div>
 
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
-        <a class="btn btn-sq-lg btn-success" href="{{ route('ventas.crear') }}">
+        <a class="btn btn-sq-lg btn-success" href="{{ route('ventas.utilidades') }}">
+            <div>
+                <i class="fa-solid fa-duotone fa-chart-mixed-up-circle-dollar fa-2xl"></i><br />Reporte utilidades
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
+        <a class="btn btn-sq-lg btn-success" href="{{ route('clientes.index') }}">
             <div>
                 <i class="fa-solid fa-duotone fa-people-group fa-2xl"></i><br />Clientes
             </div>
@@ -38,7 +46,9 @@
             </div>
         </a>
     </div>
+</div>
 
+<div class="row">
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
         <a class="btn btn-sq-lg btn-primary" href="{{ route('potreros.index') }}">
             <div>
@@ -46,9 +56,7 @@
             </div>
         </a>
     </div>
-</div>
 
-<div class="row">
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
         <a class="btn btn-sq-lg btn-info" href="{{ route('usuarios.index') }}">
             <div>

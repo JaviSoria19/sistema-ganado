@@ -18,14 +18,17 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Cliente</th>
+                <th>Nombre</th>
                 <th>Celular</th>
-                <th>C.I.</th>
-                <th>Procedencia</th>
+                <th>Estancia</th>
+
                 <th>Estado</th>
                 <th>F. Registro</th>
                 <th>F. Actualización</th>
-                <th>Modificado Por</th>
+                <th>F. Eliminación</th>
+                <th>Creado por</th>
+                <th>Modificado por</th>
+                <th>Eliminado por</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -58,21 +61,18 @@
                         }
                     },
                     {
-                        data: "nombreCliente",
+                        data: "nombre",
                     },
                     {
                         data: "celular",
                     },
                     {
-                        data: "cedulaIdentidad",
-                    },
-                    {
-                        data: "procedencia",
+                        data: "estancia",
                     },
                     {
                         data: "estado",
                         render: function(data, type, row) {
-                            if (data == 1) {
+                            if (data == 'activo') {
                                 return '<span class="badge bg-success">Activo</span>';
                             } else {
                                 return '<span class="badge bg-danger">Inactivo</span>';
@@ -92,7 +92,25 @@
                         }
                     },
                     {
+                        data: "fecha_eliminacion",
+                        render: function(data, type, row) {
+                            return new Date(data).toLocaleString();
+                        }
+                    },
+                    {
+                        data: "creado.usuario",
+                        render: function(data, type, row) {
+                            return data || '-';
+                        }
+                    },
+                    {
                         data: "modificado.usuario",
+                        render: function(data, type, row) {
+                            return data || '-';
+                        }
+                    },
+                    {
+                        data: "eliminado.usuario",
                         render: function(data, type, row) {
                             return data || '-';
                         }
@@ -105,32 +123,31 @@
                             return `
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-warning btn-sm btn-editar" 
-                                data-id="${row.idCliente}" data-toggle="tooltip" title="Editar">
+                                data-id="${row.id_cliente}" data-toggle="tooltip" title="Editar">
                             <i class="fa-duotone fa-solid fa-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-${row.estado == 1 ? 'danger' : 'success'} btn-sm btn-cambiar-estado" 
-                                data-id="${row.idCliente}" data-estado="${row.estado}" data-nombre="${row.nombreCliente}" 
-                                data-toggle="tooltip" title="${row.estado == 1 ? 'Deshabilitar' : 'Habilitar'}">
-                            <i class="fa-duotone fa-solid fa-toggle-${row.estado == 1 ? 'off' : 'on'}"></i>
+                        <button type="button" class="btn btn-${row.estado == 'activo' ? 'danger' : 'success'} btn-sm btn-cambiar-estado" 
+                                data-id="${row.id_cliente}" data-estado="${row.estado}" data-nombre="${row.nombre}" 
+                                data-toggle="tooltip" title="${row.estado == 'activo' ? 'Deshabilitar' : 'Habilitar'}">
+                            <i class="fa-duotone fa-solid fa-toggle-${row.estado == 'activo' ? 'off' : 'on'}"></i>
                         </button>
                     </div>
                 `;
                         }
                     }
                 ],
-                @include('datatables.datatables_global_properties')
-                @include('datatables.datatables_language_property')
+                @include('components.datatables.datatables_global_properties')
+                @include('components.datatables.datatables_language_property')
             }).buttons().container().appendTo('#dataTableExportButtonsContainer');
 
 
 
             $(document).on('click', '.btn-crear', function() {
-                $('#formCreateOrEdit input[name="idCliente"]').val(0);
-                $('#formCreateOrEdit input[name="nombreCliente"]').val('');
+                $('#formCreateOrEdit input[name="id_cliente"]').val(0);
+                $('#formCreateOrEdit input[name="nombre"]').val('');
                 $('#formCreateOrEdit input[name="celular"]').val('');
-                $('#formCreateOrEdit input[name="cedulaIdentidad"]').val('');
-                $('#formCreateOrEdit input[name="procedencia"]').val('');
-                
+                $('#formCreateOrEdit input[name="estancia"]').val('');
+
                 const titleElement = document.getElementById('modalCreateOrEdit_Title');
                 titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR CLIENTE';
                 $('#modalCreateOrEdit').modal('show');
@@ -142,11 +159,10 @@
                 const id = $(this).data('id');
 
                 $.get("{{ route('clientes.index') . '/' }}" + id, function(cliente) {
-                    $('#formCreateOrEdit input[name="idCliente"]').val(cliente.data.idCliente);
-                    $('#formCreateOrEdit input[name="nombreCliente"]').val(cliente.data.nombreCliente);
+                    $('#formCreateOrEdit input[name="id_cliente"]').val(cliente.data.id_cliente);
+                    $('#formCreateOrEdit input[name="nombre"]').val(cliente.data.nombre);
                     $('#formCreateOrEdit input[name="celular"]').val(cliente.data.celular);
-                    $('#formCreateOrEdit input[name="cedulaIdentidad"]').val(cliente.data.cedulaIdentidad);
-                    $('#formCreateOrEdit input[name="procedencia"]').val(cliente.data.procedencia);
+                    $('#formCreateOrEdit input[name="estancia"]').val(cliente.data.estancia);
 
                     const titleElement = document.getElementById('modalCreateOrEdit_Title');
                     titleElement.innerHTML =
@@ -157,13 +173,13 @@
 
 
             $(document).on('click', '#btnGuardar', function() {
-                const idCliente = $('#formCreateOrEdit input[name="idCliente"]').val();
-                const url = idCliente == 0 ?
+                const id_cliente = $('#formCreateOrEdit input[name="id_cliente"]').val();
+                const url = id_cliente == 0 ?
                     "{{ route('clientes.create') }}" // POST -> crear
                     :
-                    "{{ route('clientes.index') . '/' }}" + idCliente; // PUT -> actualizar
+                    "{{ route('clientes.index') . '/' }}" + id_cliente; // PUT -> actualizar
 
-                const type = idCliente == 0 ? 'POST' : 'PUT';
+                const type = id_cliente == 0 ? 'POST' : 'PUT';
 
                 $.ajax({
                     url: url,
@@ -182,16 +198,35 @@
                         }
                     },
                     error: function(xhr) {
-                        //console.error(xhr.responseText);
-                        //console.error(JSON.parse(xhr.responseText));
+                        let respuesta = {};
+                        try {
+                            respuesta = JSON.parse(xhr.responseText);
+                        } catch (e) {
+                            respuesta = {
+                                message: "Error desconocido"
+                            };
+                        }
 
-                        const erroresConcatenados = Object.values(JSON.parse(xhr.responseText)
-                                .errors)
-                            .flatMap(errores => errores)
-                            .join('<br>');
+                        let htmlError = "";
 
-                        Swal.fire('Error', 'Ocurrió un error al intentar la acción: <br>' +
-                            erroresConcatenados, 'error');
+                        if (respuesta.errors) {
+                            // Errores de validación (422)
+                            htmlError = Object.values(respuesta.errors)
+                                .flat()
+                                .join("<br>");
+                        } else if (respuesta.message) {
+                            // Errores manuales (400, 403, 500...)
+                            htmlError = respuesta.message;
+                        } else {
+                            htmlError = "Ocurrió un error inesperado.";
+                        }
+                        Swal.fire({
+                            theme: localStorage.getItem('theme') || 'dark',
+                            title: 'Error',
+                            html: 'Ocurrió un error al intentar la acción: <br>' +
+                                htmlError,
+                            icon: 'error'
+                        });
                     }
                 });
             });
@@ -199,13 +234,13 @@
             $(document).on('click', '.btn-cambiar-estado', function() {
                 const id = $(this).data('id');
                 const estadoActual = $(this).data('estado');
-                const nuevoEstado = estadoActual == 1 ? 0 : 1;
+                const nuevoEstado = estadoActual == 'activo' ? 'inactivo' : 'activo';
                 const nombre = $(this).data('nombre');
-                const accion = nuevoEstado == 1 ? 'habilitar' : 'deshabilitar';
+                const accion = nuevoEstado == 'activo' ? 'habilitar' : 'deshabilitar';
 
                 Swal.fire({
                     title: `¡ATENCIÓN!`,
-                    text: `¿Estás seguro de ${accion} el/la cliente ${nombre}?`,
+                    html: `¿Estás seguro de <b>${accion}</b> el/la cliente <b class="text-primary">${nombre}</b>?`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
@@ -221,7 +256,7 @@
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
                             data: {
-                                idCliente: id
+                                id_cliente: id
                             },
                             success: function(response) {
                                 Swal.fire('Actualizado', response.message, 'success');

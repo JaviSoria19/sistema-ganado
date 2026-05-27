@@ -24,7 +24,7 @@
     </div>
 
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
-        <a class="btn btn-sq-lg btn-success" href="{{ route('ventas.crear') }}">
+        <a class="btn btn-sq-lg btn-success" href="{{ route('clientes.index') }}">
             <div>
                 <i class="fa-solid fa-duotone fa-people-group fa-2xl"></i><br />Clientes
             </div>
