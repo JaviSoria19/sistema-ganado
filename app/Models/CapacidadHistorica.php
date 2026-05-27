@@ -15,6 +15,11 @@ class CapacidadHistorica extends Model
     const CREATED_AT = 'fecha_registro';
     const UPDATED_AT = 'fecha_actualizacion';
     
+    public function potrero()
+    {
+        return $this->belongsTo(Potrero::class, 'id_potrero', 'id_potrero');
+    }
+
     /** Relación con atributo de auditoría */
     public function creado()
     {
@@ -33,11 +38,16 @@ class CapacidadHistorica extends Model
 
     public function get_all_capacidades_historicas()
     {
-        return CapacidadHistorica::with('creado', 'modificado', 'eliminado')->orderBy('id_potrero', 'ASC')->get();
+        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('id_potrero', 'ASC')->get();
+    }
+
+    public function get_capacidades_historicas_por_potrero($id_potrero)
+    {
+        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->where('id_potrero', $id_potrero)->orderBy('id_potrero', 'ASC')->get();
     }
     
     public function get_capacidad_historica($id_capacidad_historica)
     {
-        return CapacidadHistorica::with('creado', 'modificado', 'eliminado')->find($id_capacidad_historica);
+        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->find($id_capacidad_historica);
     }
 }

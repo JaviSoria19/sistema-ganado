@@ -60,6 +60,11 @@ Route::controller(PotreroController::class)->group(function () {
     Route::get('potreros/{potrero}/detalles', 'view_details')->name('potreros.detalles');
 });
 
+
+
+
+
+
 Route::controller(EmpleadoController::class)->group(function () {
     Route::get('empleados', 'view_index')->name('empleados.index');
     Route::get('empleados/listar', 'listarEmpleados')->name('empleados.listar');

@@ -56,7 +56,8 @@
             2,
         );
     @endphp
-    <p class="form-control mb-3 fw-bold {{ $capacidad_carga_disponible >= 0 ? 'text-success' : 'text-danger' }}" id="capacidad_carga_disponible">
+    <p class="form-control mb-3 fw-bold {{ $capacidad_carga_disponible >= 0 ? 'text-success' : 'text-danger' }}"
+        id="capacidad_carga_disponible">
         {{ $capacidad_carga_disponible }}
     </p>
 
@@ -80,6 +81,12 @@
     </div>
 
     <h2 class="text-info fw-bold mt-3">Capacidades Históricas</h2>
+
+    <div class="border border-info rounded mb-3 p-2">
+        <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+            <canvas id="chart-capacidades-historicas"></canvas>
+        </div>
+    </div>
 
     <table class="table table-bordered table-striped mb-3 dataTable" id="capacidades-historicas">
         <thead>
@@ -119,6 +126,12 @@
     <div class="mb-3"></div>
 
     <h2 class="text-info fw-bold mt-3">Bovinos</h2>
+
+    <div class="border border-info rounded mb-3 p-2">
+        <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
+            <canvas id="chart-bovinos"></canvas>
+        </div>
+    </div>
 
     <table class="table table-bordered table-striped mb-3 dataTable" id="bovinos">
         <thead>
@@ -243,6 +256,117 @@
                     },
                 ],
                 @include('components.datatables.datatables_language_property')
+            });
+
+            new Chart(document.getElementById('chart-capacidades-historicas'), {
+                type: 'line',
+                data: {
+                    labels: @json(
+                        $potrero->capacidades_historicas->pluck('fecha')->map(function ($fecha) {
+                            return date('d/m/Y', strtotime($fecha));
+                        })),
+                    datasets: [{
+                        label: 'Capacidad de Carga (ua)',
+                        data: @json($potrero->capacidades_historicas->pluck('capacidad_carga')),
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: true,
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        title: {
+                            display: false,
+                            text: 'Tendencia de Capacidad de Carga a lo largo del tiempo'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Fecha'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Capacidad de Carga (ua)'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de dona de doble anillo para separar bovinos por género (Peso en kg y ua)
+            new Chart(document.getElementById('chart-bovinos'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Machos', 'Hembras'],
+                    datasets: [{
+                            label: 'Peso Actual (kg)',
+                            data: [
+                                {{ $potrero->bovinos->where('genero', 'macho')->sum('peso_actual') }},
+                                {{ $potrero->bovinos->where('genero', 'hembra')->sum('peso_actual') }}
+                            ],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.7)', // Azul para machos
+                                'rgba(255, 99, 132, 0.7)' // Rojo/Rosa para hembras
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Peso Actual (ua)',
+                            data: [
+                                {{ round($potrero->bovinos->where('genero', 'macho')->sum('peso_actual') / session('unidad_animal'), 2) }},
+                                {{ round($potrero->bovinos->where('genero', 'hembra')->sum('peso_actual') / session('unidad_animal'), 2) }}
+                            ],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.4)', // Azul más claro para UA machos
+                                'rgba(255, 99, 132, 0.4)' // Rojo más claro para UA hembras
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + (context.datasetIndex === 0 ? ' kg' :
+                                            ' ua');
+                                    }
+                                    return context.label + ' (' + label + ')';
+                                }
+                            }
+                        }
+                    }
+                }
             });
         });
     </script>
