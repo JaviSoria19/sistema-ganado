@@ -17,7 +17,12 @@ class Potrero extends Model
 
     public function capacidades_historicas()
     {
-        return $this->hasMany(CapacidadHistorica::class, 'id_potrero', 'id_potrero')->orderBy('fecha_registro', 'ASC');
+        return $this->hasMany(CapacidadHistorica::class, 'id_potrero', 'id_potrero')->orderBy('fecha', 'ASC');
+    }
+
+    public function bovinos()
+    {
+        return $this->hasMany(Bovino::class, 'id_potrero', 'id_potrero')->orderBy('identificador', 'ASC');
     }
 
     /** Relación con atributo de auditoría */
@@ -38,11 +43,11 @@ class Potrero extends Model
 
     public function get_all_potreros()
     {
-        return Potrero::with('capacidades_historicas', 'creado', 'modificado', 'eliminado')->orderBy('nombre', 'ASC')->get();
+        return Potrero::with('capacidades_historicas', 'bovinos', 'creado', 'modificado', 'eliminado')->orderBy('nombre', 'ASC')->get();
     }
 
     public function get_potrero($id_potrero)
     {
-        return Potrero::with('capacidades_historicas', 'creado', 'modificado', 'eliminado')->find($id_potrero);
+        return Potrero::with('capacidades_historicas', 'bovinos', 'creado', 'modificado', 'eliminado')->find($id_potrero);
     }
 }

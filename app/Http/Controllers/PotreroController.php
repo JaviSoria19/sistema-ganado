@@ -79,6 +79,7 @@ class PotreroController extends Controller
             $capacidad_historica = new CapacidadHistorica();
             $capacidad_historica->id_potrero = $potrero->id_potrero;
             $capacidad_historica->capacidad_carga = $request->capacidad_carga_actual;
+            $capacidad_historica->fecha = date('Y-m-d');
             $capacidad_historica->creado_por = session('id_usuario');
             $capacidad_historica->save();
 
@@ -108,6 +109,7 @@ class PotreroController extends Controller
             $capacidad_historica = new CapacidadHistorica();
             $capacidad_historica->id_potrero = $potrero->id_potrero;
             $capacidad_historica->capacidad_carga = $request->capacidad_carga_actual;
+            $capacidad_historica->fecha = date('Y-m-d');
             $capacidad_historica->creado_por = session('id_usuario');
             $capacidad_historica->save();
         }

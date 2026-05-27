@@ -35,6 +35,8 @@ class ParametroController extends Controller
         $parametro->modificado_por = session('id_usuario');
         $parametro->save();
 
+        session(['unidad_animal' => $parametro->unidad_animal]);
+        
         return response()->json([
             'success' => true,
             'message' => 'Parametro actualizado correctamente',

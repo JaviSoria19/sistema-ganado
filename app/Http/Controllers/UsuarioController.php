@@ -174,6 +174,7 @@ class UsuarioController extends Controller
             'id_usuario' => $usuario->id_usuario,
             'usuario' => $usuario->usuario,
             'tema_preferido' => $usuario->tema_preferido,
+            'unidad_animal' => $parametro->unidad_animal,
         ]);
         return redirect()->route('dashboard');
     }
