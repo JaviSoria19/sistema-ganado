@@ -110,7 +110,8 @@ language: {
                             "0": "Constructor de búsqueda",
                             "_": "Constructor de búsqueda (%d)"
                         },
-                        "value": "Valor"
+                        "value": "Valor",
+                        "valueJoiner": "y"
                     },
                     "searchPanes": {
                         "clearMessage": "Limpiar todo",

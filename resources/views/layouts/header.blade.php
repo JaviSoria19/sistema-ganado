@@ -30,8 +30,8 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('potreros') ? 'active' : '' }}" aria-current="page"
-                            href="{{ route('potreros.index') }}"><i class="fa-solid fa-duotone fa-cow"></i>
+                        <a class="nav-link {{ request()->is('entores') ? 'active' : '' }}" aria-current="page"
+                            href="{{ route('entores.index') }}"><i class="fa-solid fa-duotone fa-cow"></i>
                             Entores</a>
                     </li>
 

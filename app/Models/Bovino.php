@@ -90,9 +90,23 @@ class Bovino extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_bovinos()
+    public function get_all_bovinos($id_potrero = null, $origen = null, $genero = null)
     {
-        return Bovino::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('identificador', 'ASC')->get();
+        $query = Bovino::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('fecha_nacimiento', 'ASC');
+
+        if ($id_potrero) {
+            $query->where('id_potrero', $id_potrero);
+        }
+
+        if ($origen) {
+            $query->where('origen', $origen);
+        }        
+
+        if ($genero) {
+            $query->where('genero', $genero);
+        }
+
+        return $query->get();
     }
 
     public function get_bovino($id_bovino)

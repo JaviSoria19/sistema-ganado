@@ -23,7 +23,7 @@ class Entore extends Model
             'entores_detalles',  // Tabla pivote
             'id_entore',         // FK en la tabla pivote hacia entores
             'id_hembra'          // FK en la tabla pivote hacia bovinos
-        );
+        )->orderBy('fecha_nacimiento', 'ASC');
     }
 
     /** Relación muchos a muchos con bovinos macho (tabla pivote: entores_machos) */
@@ -34,7 +34,12 @@ class Entore extends Model
             'entores_machos',    // Tabla pivote
             'id_entore',         // FK en la tabla pivote hacia entores
             'id_macho'           // FK en la tabla pivote hacia bovinos
-        );
+        )->orderBy('fecha_nacimiento', 'ASC');
+    }
+
+    public function macho()
+    {
+        return $this->belongsTo(Bovino::class, 'id_macho', 'id_bovino');
     }
 
     /** Relación con atributo de auditoría */
@@ -55,11 +60,11 @@ class Entore extends Model
 
     public function get_all_entores()
     {
-        return Entore::with('creado', 'modificado', 'eliminado')->orderBy('nombre', 'ASC')->get();
+        return Entore::with('macho.potrero', 'machos.potrero', 'hembras.potrero', 'creado', 'modificado', 'eliminado')->orderBy('fecha_inicio', 'ASC')->get();
     }
 
     public function get_entore($id_entore)
     {
-        return Entore::with('creado', 'modificado', 'eliminado')->find($id_entore);
+        return Entore::with('macho.potrero', 'machos.potrero', 'hembras.potrero', 'creado', 'modificado', 'eliminado')->findOrFail($id_entore);
     }
 }

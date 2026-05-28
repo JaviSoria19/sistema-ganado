@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BovinoController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EntoreController;
@@ -70,7 +71,18 @@ Route::controller(EntoreController::class)->group(function () {
     Route::put('entores/{entore}', 'update')->name('entores.update');
     Route::patch('entores/{entore}', 'delete')->name('entores.delete');
 
-    Route::get('entores/{entore}/detalles', 'view_details')->name('entores.detalles');
+    //Route::get('entores/{entore}/detalles', 'view_details')->name('entores.detalles');
+});
+
+Route::controller(BovinoController::class)->group(function () {
+    Route::get('bovinos', 'view_index')->name('bovinos.index');
+    Route::get('bovinos/listar', 'listar')->name('bovinos.listar');
+    Route::get('bovinos/{bovino}', 'mostrar')->name('bovinos.mostrar');
+    Route::post('bovinos', 'create')->name('bovinos.create');
+    Route::put('bovinos/{bovino}', 'update')->name('bovinos.update');
+    Route::patch('bovinos/{bovino}', 'delete')->name('bovinos.delete');
+
+    Route::get('bovinos/{bovino}/detalles', 'view_details')->name('bovinos.detalles');
 });
 
 Route::controller(ParametroController::class)->group(function () {

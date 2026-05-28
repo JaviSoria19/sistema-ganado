@@ -143,12 +143,16 @@
                 $('#form-crear-o-editar input[name="nombre"]').val(potrero.data.nombre);
                 $('#form-crear-o-editar input[name="ubicacion"]').val(potrero.data.ubicacion);
                 $('#form-crear-o-editar input[name="superficie"]').val(potrero.data.superficie);
-                $('#form-crear-o-editar select[name="tipo_pasto"]').val(potrero.data.tipo_pasto);
-                $('#form-crear-o-editar select[name="estado_potrero"]').val(potrero.data.estado_potrero).trigger(
+                $('#form-crear-o-editar select[name="tipo_pasto"]').val(potrero.data
+                .tipo_pasto);
+                $('#form-crear-o-editar select[name="estado_potrero"]').val(potrero.data
+                    .estado_potrero).trigger(
                     'change');
-                $('#form-crear-o-editar select[name="disponibilidad_agua"]').val(potrero.data.disponibilidad_agua).trigger(
+                $('#form-crear-o-editar select[name="disponibilidad_agua"]').val(potrero.data
+                    .disponibilidad_agua).trigger(
                     'change');
-                $('#form-crear-o-editar input[name="capacidad_carga_actual"]').val(potrero.data.capacidad_carga_actual).trigger(
+                $('#form-crear-o-editar input[name="capacidad_carga_actual"]').val(potrero.data
+                    .capacidad_carga_actual).trigger(
                     'change');
 
                 const titleElement = document.getElementById('modal-formulario-titulo');
