@@ -12,32 +12,26 @@ class Venta extends Model
     use HasFactory;
 
     protected $table = 'ventas';
-    protected $primaryKey = 'idVenta';
+    protected $primaryKey = 'id_venta';
 
     const CREATED_AT = 'fecha_registro';
     const UPDATED_AT = 'fecha_actualizacion';
 
-    /** Relación muchos a muchos con productos */
-    public function productos()
+    /** Relación muchos a muchos con bovinos */
+    public function bovinos()
     {
         return $this->belongsToMany(
-            Producto::class,           // Modelo relacionado
-            'detalles_ventas',         // Tabla pivote
-            'idVenta',                 // FK en la tabla pivote hacia ventas
-            'idProducto'               // FK en la tabla pivote hacia productos
-        )->withPivot('precioUSD');     // Campos extras de la tabla pivote
+            Bovino::class,           // Modelo relacionado
+            'ventas_detalles',       // Tabla pivote
+            'id_venta',              // FK en la tabla pivote hacia ventas
+            'id_bovino'              // FK en la tabla pivote hacia bovinos
+        )->withPivot('precio_fijo', 'precio_kg', 'destare', 'rendimiento', 'kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
     }
 
-    /** Relación uno a muchos con detalles_pedidos_empresas */
+    /** Relación uno a muchos con pagos */
     public function pagos()
     {
-        return $this->hasMany(PagoVenta::class, 'idVenta', 'idVenta');
-    }
-
-    /** Relación FK con usuarios */
-    public function usuario()
-    {
-        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
+        return $this->hasMany(Pago::class, 'id_venta', 'id_venta');
     }
 
     /** Relación FK con clientes */
@@ -46,116 +40,64 @@ class Venta extends Model
         return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
     }
 
-    /** Relación FK con empleados */
-    public function empleado()
+    /** Relación con atributo de auditoría */
+    public function creado()
     {
-        return $this->belongsTo(Empleado::class, 'idEmpleado', 'idEmpleado');
+        return $this->belongsTo(Usuario::class, 'creado_por', 'id_usuario');
     }
 
-    /** Relación con atributo de auditoría */
-    public function editor()
+    public function modificado()
     {
         return $this->belongsTo(Usuario::class, 'modificado_por', 'id_usuario');
     }
 
-    public function getAllVentas($fechaInicio = null, $fechaFin = null)
+    public function eliminado()
     {
-        $query = Venta::with(['productos.marca', 'pagos', 'usuario', 'cliente', 'empleado', 'editor'])
-            ->orderBy('idVenta', 'ASC');
+        return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
+    }
 
-        if ($fechaInicio && $fechaFin) {
+    public function get_all_ventas($fecha_inicio = null, $fecha_fin = null, $creado_por = null, $estado = null)
+    {
+        $query = Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')
+            ->addSelect([
+                '*',
+                DB::raw('(
+                SELECT COALESCE(SUM(p.monto), 0)
+                FROM pagos p
+                WHERE p.id_venta = ventas.id_venta
+                AND p.estado = "activo"
+            ) AS total_pagado'),
+                DB::raw('(
+                ventas.total - (
+                    SELECT COALESCE(SUM(p.monto), 0)
+                    FROM pagos p
+                    WHERE p.id_venta = ventas.id_venta
+                    AND p.estado = "activo"
+                )
+            ) AS saldo'),
+            ])
+            ->orderBy('id_venta', 'ASC');
+
+        if ($fecha_inicio && $fecha_fin) {
             $query->whereBetween('fecha_registro', [
-                $fechaInicio . ' 00:00:00',
-                $fechaFin . ' 23:59:59'
+                $fecha_inicio . ' 00:00:00',
+                $fecha_fin . ' 23:59:59'
             ]);
+        }
+
+        if ($creado_por) {
+            $query->where('creado_por', $creado_por);
+        }
+
+        if (!is_null($estado)) {
+            $query->where('estado', $estado);
         }
 
         return $query->get();
     }
-
-    public function getVentasPorEstadoYSaldo($estado, $saldoUSD_operador, $saldoUSD, $orden, $fechaInicio, $fechaFin)
+    
+    public function get_venta($id_venta)
     {
-        return Venta::with(['productos.marca', 'pagos', 'usuario', 'cliente', 'empleado', 'editor'])
-            ->where('estado', $estado)
-            ->where('saldoUSD', $saldoUSD_operador, $saldoUSD)
-            ->whereBetween('fecha_registro', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
-            ->orderBy('idVenta', $orden)
-            ->get();
-    }
-
-    public function getVenta($idVenta)
-    {
-        return Venta::with(['productos.marca', 'pagos', 'usuario', 'cliente', 'empleado', 'editor'])->find($idVenta);
-    }
-
-    public function dashboard_getEstadisticasVentas()
-    {
-        $fechas = [
-            'hoy' => [Carbon::today(), Carbon::today()->endOfDay()],
-            'semana' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
-            'mes' => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
-        ];
-
-        $resultados = [];
-
-        foreach ($fechas as $periodo => [$inicio, $fin]) {
-            // Query base para ventas (sin join)
-            $ventasBase = DB::table('ventas as v')
-                ->where('v.estado', 1)
-                ->whereBetween('v.fecha_registro', [$inicio, $fin]);
-
-            // Cantidad de ventas e ingresos (sin join para evitar duplicados)
-            $estadisticasVentas = (clone $ventasBase)
-                ->select(
-                    DB::raw('COUNT(DISTINCT v.idVenta) as cantidad'),
-                    DB::raw('SUM(v.totalUSD - v.saldoUSD) as ingresos')
-                )
-                ->first();
-
-            // Productos vendidos (con join solo para este cálculo)
-            $productosVendidos = DB::table('detalles_ventas as dv')
-                ->join('ventas as v', 'dv.idVenta', '=', 'v.idVenta')
-                ->where('v.estado', 1)
-                ->whereBetween('v.fecha_registro', [$inicio, $fin])
-                ->count('dv.idProducto');
-
-            $resultados[$periodo] = [
-                'cantidadVentas' => $estadisticasVentas->cantidad ?? 0,
-                'ingresos' => $estadisticasVentas->ingresos ?? 0,
-                'productosVendidos' => $productosVendidos ?? 0,
-            ];
-        }
-
-        return $resultados;
-    }
-
-    public function dashboard_getClientesConSaldo()
-    {
-        return Venta::select(
-            'empleados.nombreEmpleado',
-            'clientes.id_cliente',
-            'clientes.nombreCliente',
-            'clientes.celular',
-            'clientes.procedencia',
-            DB::raw('SUM(ventas.saldoUSD) as saldoPendiente'),
-            DB::raw('MIN(ventas.fecha_registro) as fechaMasAntigua')
-        )
-            ->join('clientes', 'ventas.id_cliente', '=', 'clientes.id_cliente')
-            ->join('empleados', 'ventas.idEmpleado', '=', 'empleados.idEmpleado')
-            ->where('ventas.estado', 1)
-            ->where('ventas.saldoUSD', '>', 0)
-            ->groupBy('clientes.id_cliente', 'clientes.nombreCliente', 'clientes.celular')
-            ->orderByDesc('saldoPendiente')
-            ->get();
-    }
-
-    public function dashboard_getVentasConSaldo()
-    {
-        return Venta::with(['productos.marca', 'pagos', 'usuario', 'cliente', 'empleado', 'editor'])
-            ->where('ventas.estado', 1)
-            ->where('ventas.saldoUSD', '>', 0)
-            ->orderBy('ventas.id_cliente', 'ASC')
-            ->orderBy('ventas.fecha_registro', 'ASC')
-            ->get();
+        return Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->find($id_venta);
     }
 }

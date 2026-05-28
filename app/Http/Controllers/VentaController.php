@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Venta;
-use App\Models\Empleado;
-use App\Models\PagoVenta;
-use App\Models\Producto;
+use App\Models\Pago;
+use App\Models\Bovino;
 use App\Models\Parametro;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -40,12 +39,10 @@ class VentaController extends Controller
             return redirect()->route('login');
         }
 
-        $empleados = (new Empleado())->getAllEmpleados();
         $parametro = (new Parametro())->get_parametro();
 
         return view('ventas.create', [
             'head_title' => 'CREAR VENTA',
-            'empleados' => $empleados,
             'parametro' => $parametro,
         ]);
     }
@@ -56,13 +53,11 @@ class VentaController extends Controller
             return redirect()->route('login');
         }
 
-        $venta = (new Venta())->getVenta($venta);
-        $empleados = (new Empleado())->getAllEmpleados();
+        $venta = (new Venta())->get_venta($venta);
         $parametro = (new Parametro())->get_parametro();
 
         return view('ventas.update', [
             'head_title' => 'EDITAR VENTA N°' . $venta->idVenta,
-            'empleados' => $empleados,
             'parametro' => $parametro,
             'venta' => $venta,
         ]);
@@ -77,7 +72,7 @@ class VentaController extends Controller
         ini_set('memory_limit', '512M');
         set_time_limit(300);
 
-        $venta = (new Venta())->getVenta($venta);
+        $venta = (new Venta())->get_venta($venta);
         $fecha = date('Y-m-d H_i_s');
 
         $pdf = Pdf::loadView('ventas.imprimir', compact('venta'));
@@ -139,7 +134,7 @@ class VentaController extends Controller
             ->join('ventas as v', 'dv.idVenta', '=', 'v.idVenta')
             ->where('v.estado', 1)
             ->whereBetween('v.fecha_registro', [$fechaInicio . ' 00:00:00', $fechaFin . ' 23:59:59'])
-            ->count('dv.idProducto');
+            ->count('dv.idBovino');
 
         return view('ventas.reporte_utilidades', [
             'head_title' => 'REPORTE UTILIDADES',
@@ -189,7 +184,7 @@ class VentaController extends Controller
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
         }
 
-        $ventas = (new Venta())->getAllVentas($request->fechaInicio, $request->fechaFin);
+        $ventas = (new Venta())->get_all_ventas($request->fechaInicio, $request->fechaFin);
 
         return response()->json([
             'data' => $ventas
@@ -202,7 +197,7 @@ class VentaController extends Controller
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
         }
 
-        $venta = (new Venta())->getVenta($request->venta);
+        $venta = (new Venta())->get_venta($request->venta);
 
         return response()->json([
             'data' => $venta
@@ -219,18 +214,18 @@ class VentaController extends Controller
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
             'productos'   => 'required|array|min:1',
-            'productos.*.idProducto' => 'required|integer|exists:productos,idProducto',
+            'productos.*.idBovino' => 'required|integer|exists:productos,idBovino',
             'productos.*.precioUSD'  => 'required|numeric|min:0',
             'pagos'       => 'nullable|array'
         ]);
 
         // Validar productos antes de iniciar la transacción
         foreach ($request->productos as $detalle) {
-            $producto = Producto::find($detalle['idProducto']);
+            $producto = Bovino::find($detalle['idBovino']);
             if (!$producto) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'El producto con ID ' . $detalle['idProducto'] . ' no existe.'
+                    'message' => 'El producto con ID ' . $detalle['idBovino'] . ' no existe.'
                 ], 400);
             }
 
@@ -239,7 +234,7 @@ class VentaController extends Controller
                 $estadoTexto = $producto->estado == 2 ? '<b class="text-primary">vendido</b>' : '<b class="text-secondary">eliminado</b>';
                 return response()->json([
                     'success' => false,
-                    'message' => 'El producto con el código <b class="text-primary">' . $producto->codigoProducto . '</b> no está disponible para la venta (actualmente ' . $estadoTexto . '), remuévalo de la lista e intente nuevamente.',
+                    'message' => 'El producto con el código <b class="text-primary">' . $producto->codigoBovino . '</b> no está disponible para la venta (actualmente ' . $estadoTexto . '), remuévalo de la lista e intente nuevamente.',
                 ], 400);
             }
         }
@@ -256,11 +251,11 @@ class VentaController extends Controller
             $venta->save();
 
             foreach ($request->productos as $detalle) {
-                $venta->productos()->attach($detalle['idProducto'], [
+                $venta->productos()->attach($detalle['idBovino'], [
                     'precioUSD' => $detalle['precioUSD']
                 ]);
 
-                $producto = Producto::find($detalle['idProducto']);
+                $producto = Bovino::find($detalle['idBovino']);
                 $producto->estado = 2;
                 $producto->fechaVenta = Carbon::now();
                 $producto->save();
@@ -268,7 +263,7 @@ class VentaController extends Controller
 
             if (!empty($request->pagos)) {
                 foreach ($request->pagos as $pago) {
-                    $p = new PagoVenta();
+                    $p = new Pago();
                     $p->idVenta = $venta->idVenta;
                     $p->pagoUSD = $pago['pagoUSD'];
                     $p->fechaPago = $pago['fechaPago'];
@@ -304,13 +299,13 @@ class VentaController extends Controller
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
             'productos'   => 'required|array|min:1',
-            'productos.*.idProducto' => 'required|integer|exists:productos,idProducto',
+            'productos.*.idBovino' => 'required|integer|exists:productos,idBovino',
             'productos.*.precioUSD'  => 'required|numeric|min:0',
         ]);
 
         DB::beginTransaction();
         try {
-            $venta = (new Venta())->getVenta($idVenta);
+            $venta = (new Venta())->get_venta($idVenta);
             $venta->id_cliente = $request->id_cliente;
             $venta->idEmpleado = $request->idEmpleado;
             $venta->modificado_por = session('id_usuario');
@@ -319,15 +314,15 @@ class VentaController extends Controller
             $venta->save();
 
             // Obtener productos antes de la actualización
-            $productosAnteriores = $venta->productos->pluck('idProducto')->toArray();
-            $productosNuevos = collect($request->productos)->pluck('idProducto')->toArray();
+            $productosAnteriores = $venta->productos->pluck('idBovino')->toArray();
+            $productosNuevos = collect($request->productos)->pluck('idBovino')->toArray();
 
             // Identificar productos eliminados
             $productosEliminados = array_diff($productosAnteriores, $productosNuevos);
 
             // Revertir estado de los productos eliminados
             foreach ($productosEliminados as $idProd) {
-                $producto = Producto::find($idProd);
+                $producto = Bovino::find($idProd);
                 if ($producto) {
                     $producto->estado = 1; // Disponible nuevamente
                     $producto->fechaVenta = null;
@@ -339,30 +334,30 @@ class VentaController extends Controller
             $venta->productos()->detach();
 
             foreach ($request->productos as $detalle) {
-                $venta->productos()->attach($detalle['idProducto'], [
+                $venta->productos()->attach($detalle['idBovino'], [
                     'precioUSD' => $detalle['precioUSD']
                 ]);
 
-                $producto = (new Producto())->getProducto($detalle['idProducto']);
+                $producto = (new Bovino())->getBovino($detalle['idBovino']);
                 $producto->estado = 2;
                 $producto->fechaVenta = Carbon::now();
                 $producto->save();
             }
 
             // Borrar pagos anteriores
-            /*PagoVenta::where('idVenta', $venta->idVenta)->delete();*/
+            /*Pago::where('idVenta', $venta->idVenta)->delete();*/
 
             // Insertar nuevos pagos
             foreach ($request->pagos as $pago) {
-                if ($pago['idPagoVenta'] == '0') {
-                    $p = new PagoVenta();
+                if ($pago['idPago'] == '0') {
+                    $p = new Pago();
                     $p->idVenta = $venta->idVenta;
                     $p->pagoUSD = $pago['pagoUSD'];
                     $p->fechaPago = $pago['fechaPago'];
                     $p->modificado_por = session('id_usuario');
                     $p->save();
                 } else {
-                    $p = (new PagoVenta())->getPagoVenta($pago['idPagoVenta']);
+                    $p = (new Pago())->getPago($pago['idPago']);
                     // Actualizar solo si el pago es menor o igual a 0.00 (editable)
                     if ($p->pagoUSD <= '0.00') {
                         $p->pagoUSD = $pago['pagoUSD'];
@@ -396,7 +391,7 @@ class VentaController extends Controller
             'motivoEliminacion' => 'required|string|min:3|max:255',
         ]);
 
-        $venta = (new Venta())->getVenta($request->idVenta);
+        $venta = (new Venta())->get_venta($request->idVenta);
         $venta->estado = 0;
         $venta->fechaEliminacion = now();
         $venta->motivoEliminacion = $request->motivoEliminacion;
@@ -404,7 +399,7 @@ class VentaController extends Controller
         $venta->save();
 
         foreach ($venta->productos as $producto) {
-            $p = (new Producto())->getProducto($producto->idProducto);
+            $p = (new Bovino())->getBovino($producto->idBovino);
             $p->estado = 1;
             $p->fechaVenta = null;
             $p->save();
