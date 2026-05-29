@@ -60,7 +60,7 @@ class Entore extends Model
 
     public function get_all_entores()
     {
-        return Entore::with('macho.potrero', 'machos.potrero', 'hembras.potrero', 'creado', 'modificado', 'eliminado')->orderBy('fecha_inicio', 'ASC')->get();
+        return Entore::with('macho.potrero', 'machos.potrero', 'hembras.potrero', 'creado', 'modificado', 'eliminado')->orderBy('fecha_inicio', 'DESC')->get();
     }
 
     public function get_entore($id_entore)

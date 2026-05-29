@@ -50,7 +50,8 @@
                     <!-- Macho principal (unitoro / inseminación) -->
                     <div class="mb-3" id="campo-macho-principal" style="display:none;">
                         <label for="id_macho" class="form-label">Macho principal</label>
-                        <select class="form-select" id="id_macho" name="id_macho">
+                        <br>
+                        <select class="form-select select2" id="id_macho" name="id_macho">
                             <option value="">— Sin asignar —</option>
                         </select>
                     </div>

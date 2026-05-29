@@ -1,6 +1,14 @@
 <script>
     const fechaHoy = new Date().toISOString().split('T')[0];
 
+    const select2Config = {
+        width: '80%',
+        language: "es",
+        dropdownCssClass: localStorage.getItem('theme') == 'dark' ? 'bg-dark text-white' : '',
+        selectionCssClass: localStorage.getItem('theme') == 'dark' ? 'bg-dark text-white' : '',
+        dropdownParent: $('#modal-formulario')
+    };
+
     // ─── Datos globales ───────────────────────────────────────────────────────
     let listaMachos = []; // bovinos macho cargados por AJAX
     let listaHembras = []; // bovinos hembra cargados por AJAX
@@ -22,31 +30,42 @@
     function agregarFilaMacho(id_macho = null) {
         const idx = $('#lista-machos .fila-macho').length;
         const options = buildSelectOptions(listaMachos, id_macho);
-        const fila = `
-            <div class="input-group mb-2 fila-macho">
-                <select class="form-select" name="machos[${idx}][id_macho]" required>
-                    ${options}
-                </select>
-                <button type="button" class="btn btn-outline-danger btn-quitar-macho">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>`;
-        $('#lista-machos').append(fila);
+
+        // Convertimos el string HTML en un objeto jQuery para manipularlo antes o después de insertarlo
+        const $fila = $(`
+        <div class="input-group mb-2 fila-macho">
+            <select class="form-select select2" name="machos[${idx}][id_macho]" required>
+                ${options}
+            </select>
+            <button type="button" class="btn btn-outline-danger btn-quitar-macho">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>`);
+
+        $('#lista-machos').append($fila);
+
+        // BUSCAMOS el select dentro de esta NUEVA fila y le aplicamos Select2
+        $fila.find('.select2').select2(select2Config);
     }
 
     function agregarFilaHembra(id_hembra = null) {
         const idx = $('#lista-hembras .fila-hembra').length;
         const options = buildSelectOptions(listaHembras, id_hembra);
-        const fila = `
-            <div class="input-group mb-2 fila-hembra">
-                <select class="form-select" name="hembras[${idx}][id_hembra]" required>
-                    ${options}
-                </select>
-                <button type="button" class="btn btn-outline-danger btn-quitar-hembra">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>`;
-        $('#lista-hembras').append(fila);
+
+        const $fila = $(`
+        <div class="input-group mb-2 fila-hembra">
+            <select class="form-select select2" name="hembras[${idx}][id_hembra]" required>
+                ${options}
+            </select>
+            <button type="button" class="btn btn-outline-danger btn-quitar-hembra">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>`);
+
+        $('#lista-hembras').append($fila);
+
+        // BUSCAMOS el select dentro de esta NUEVA fila y le aplicamos Select2
+        $fila.find('.select2').select2(select2Config);
     }
 
     // Renumera los name[] después de quitar una fila
@@ -73,6 +92,7 @@
 
     // ─── Carga de bovinos por AJAX ────────────────────────────────────────────
     function cargarBovinos() {
+        // Cargar machos y hembras activos para los selects del formulario
         const urlMachos = "{{ route('bovinos.listar') }}?genero=macho&estado=activo";
         const urlHembras = "{{ route('bovinos.listar') }}?genero=hembra&estado=activo";
 
@@ -88,6 +108,7 @@
                 '<option value="">— Sin asignar —</option>' +
                 buildSelectOptions(listaMachos)
             );
+            $('#id_macho').trigger('change');
         });
     }
 
@@ -98,7 +119,7 @@
         $('#fecha_inicio').val(fechaHoy);
         $('#fecha_fin').val('');
         $('#codigo_pajuela').val('');
-        $('#id_macho').val('');
+        $('#id_macho').val('').trigger('change');
         $('#observaciones').val('');
         $('#lista-machos').empty();
         $('#lista-hembras').empty();
@@ -144,82 +165,84 @@
 
     // ─── DataTable ────────────────────────────────────────────────────────────
     $(document).ready(function() {
+        $('.select2').select2(select2Config); // inicialización global para selects dinámicos
 
         cargarBovinos(); // pre-carga al abrir la página
 
         const table = $("#dataTable").DataTable({
-                processing: true,
-                ajax: {
-                    url: "{{ route('entores.listar') }}",
-                    type: "GET",
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    error: function(xhr, error) {
-                        console.error("Error al cargar datos:", error);
+            processing: true,
+            ajax: {
+                url: "{{ route('entores.listar') }}",
+                type: "GET",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                error: function(xhr, error) {
+                    console.error("Error al cargar datos:", error);
+                }
+            },
+            columns: [{
+                    data: null,
+                    render: function(data, type, row, meta) {
+                        return meta.row + 1;
                     }
                 },
-                columns: [{
-                        data: null,
-                        render: function(data, type, row, meta) {
-                            return meta.row + 1;
-                        }
-                    },
-                    {
-                        data: "tipo_entore",
-                        render: function(data) {
-                            const map = {
-                                unitoro: '<span class="badge bg-primary">Unitoro</span>',
-                                multitoro: '<span class="badge bg-warning text-dark">Multitoro</span>',
-                                inseminacion: '<span class="badge bg-info text-dark">Inseminación</span>',
-                            };
-                            return map[data] || data;
-                        }
-                    },
-                    {
-                        data: "fecha_inicio",
-                        render: function(data) {
-                            return data || '-';
-                        }
-                    },
-                    {
-                        data: "fecha_fin",
-                        render: function(data) {
-                            return data || '-';
-                        }
-                    },
-                    {
-                        data: "codigo_pajuela",
-                        render: function(data) {
-                            return data ? `<span class="badge bg-info text-dark">${data}</span>` :
-                                '-';
-                        }
-                    },
-                    {
-                        data: null,
-                        render: function(data, type, row) {
-                            switch (row.tipo_entore) {
-                                case 'unitoro':
-                                    const fecha_nacimiento = new Date(row.macho.fecha_nacimiento);
-                                    const carimbo = fecha_nacimiento.getFullYear();
-                                    const potrero = row.macho.potrero ?
-                                        `P: ${row.macho.potrero.nombre}` : 'Sin potrero';
-                                    return row.macho ?
-                                        `<span class="badge bg-primary">C${carimbo} ${row.macho.identificador} (${row.macho.color_actual}) ${potrero}</span>` :
-                                        '-';
-                                case 'multitoro':
-                                    if (!row.machos || row.machos.length === 0) return '-';
+                {
+                    data: "tipo_entore",
+                    render: function(data) {
+                        const map = {
+                            unitoro: '<span class="badge bg-primary">Unitoro</span>',
+                            multitoro: '<span class="badge bg-warning text-dark">Multitoro</span>',
+                            inseminacion: '<span class="badge bg-info text-dark">Inseminación</span>',
+                        };
+                        return map[data] || data;
+                    }
+                },
+                {
+                    data: "fecha_inicio",
+                    render: function(data) {
+                        return data || '-';
+                    }
+                },
+                {
+                    data: "fecha_fin",
+                    render: function(data) {
+                        return data || '-';
+                    }
+                },
+                {
+                    data: "codigo_pajuela",
+                    render: function(data) {
+                        return data ? `<span class="badge bg-info text-dark">${data}</span>` :
+                            '-';
+                    }
+                },
+                {
+                    data: null,
+                    render: function(data, type, row) {
+                        switch (row.tipo_entore) {
+                            case 'unitoro':
+                                const fecha_nacimiento = new Date(row.macho.fecha_nacimiento);
+                                const carimbo = fecha_nacimiento.getFullYear();
+                                const potrero = row.macho.potrero ?
+                                    `P: ${row.macho.potrero.nombre}` : 'Sin potrero';
+                                return row.macho ?
+                                    `<span class="badge bg-primary">C${carimbo} ${row.macho.identificador} (${row.macho.color_actual}) ${potrero}</span>` :
+                                    '-';
+                            case 'multitoro':
+                                if (!row.machos || row.machos.length === 0) return '-';
 
-                                    return row.machos.map((macho, index) => {
-                                        const fecha_nacimiento = new Date(macho.fecha_nacimiento);
-                                        const carimbo = fecha_nacimiento.getFullYear();
-                                        const potrero = macho.potrero ? `P: ${macho.potrero.nombre}` :
-                                            'Sin potrero';
-                                        return `<span class="badge bg-warning text-dark">M${index + 1}: C${carimbo} ${macho.identificador} (${macho.color_actual}) ${potrero}</span>`;
-                                    }
-                                ).join("<br>");
+                                return row.machos.map((macho, index) => {
+                                    const fecha_nacimiento = new Date(macho
+                                        .fecha_nacimiento);
+                                    const carimbo = fecha_nacimiento.getFullYear();
+                                    const potrero = macho.potrero ?
+                                        `P: ${macho.potrero.nombre}` :
+                                        'Sin potrero';
+                                    return `<span class="badge bg-warning text-dark">M${index + 1}: C${carimbo} ${macho.identificador} (${macho.color_actual}) ${potrero}</span>`;
+                                }).join("<br>");
                             default:
-                            return '-';
+                                return '-';
                         }
                     }
                 },
@@ -360,242 +383,244 @@
             @include('components.datatables.datatables_language_property')
         }).buttons().container().appendTo('#dataTable-export-buttons-container');
 
-    // ─── Tipo entore: mostrar/ocultar campos ─────────────────────────────
-    $(document).on('change', '#tipo_entore', function() {
-        actualizarCamposPorTipo($(this).val());
-    });
-
-    // ─── Agregar / quitar machos ──────────────────────────────────────────
-    $(document).on('click', '#btn-agregar-macho', function() {
-        agregarFilaMacho();
-    }); $(document).on('click', '.btn-quitar-macho', function() {
-        $(this).closest('.fila-macho').remove();
-        renumerarFilas('#lista-machos', 'machos');
-    });
-
-    // ─── Agregar / quitar hembras ─────────────────────────────────────────
-    $(document).on('click', '#btn-agregar-hembra', function() {
-        agregarFilaHembra();
-    }); $(document).on('click', '.btn-quitar-hembra', function() {
-        if ($('#lista-hembras .fila-hembra').length === 1) {
-            Swal.fire({
-                theme: localStorage.getItem('theme') || 'dark',
-                title: 'Atención',
-                text: 'Debe haber al menos una hembra en el entore.',
-                icon: 'warning'
-            });
-            return;
-        }
-        $(this).closest('.fila-hembra').remove();
-        renumerarFilas('#lista-hembras', 'hembras');
-    });
-
-    // ─── Botón Crear ──────────────────────────────────────────────────────
-    $(document).on('click', '.btn-crear', function() {
-        cargarBovinos().then(() => {
-            resetearFormulario();
-            const titleElement = document.getElementById('modal-formulario-titulo');
-            titleElement.innerHTML =
-                '<i class="fa-solid fa-duotone fa-plus"></i> CREAR ENTORE';
-            $('#modal-formulario').modal('show');
+        // ─── Tipo entore: mostrar/ocultar campos ─────────────────────────────
+        $(document).on('change', '#tipo_entore', function() {
+            actualizarCamposPorTipo($(this).val());
         });
-    });
 
-    // ─── Botón Editar ─────────────────────────────────────────────────────
-    $(document).on('click', '.btn-editar', function() {
-        const id = $(this).data('id');
-        cargarBovinos().then(() => {
-            $.get("{{ route('entores.mostrar', ':id') }}".replace(':id', id), function(
-                res) {
-                const e = res.data;
+        // ─── Agregar / quitar machos ──────────────────────────────────────────
+        $(document).on('click', '#btn-agregar-macho', function() {
+            agregarFilaMacho();
+        });
+        $(document).on('click', '.btn-quitar-macho', function() {
+            $(this).closest('.fila-macho').remove();
+            renumerarFilas('#lista-machos', 'machos');
+        });
 
-                $('#form-crear-o-editar input[name="id_entore"]').val(e.id_entore);
-                $('#tipo_entore').val(e.tipo_entore).trigger('change');
-                $('#fecha_inicio').val(e.fecha_inicio);
-                $('#fecha_fin').val(e.fecha_fin ?? '');
-                $('#codigo_pajuela').val(e.codigo_pajuela ?? '');
-                $('#id_macho').val(e.id_macho ?? '');
-                $('#observaciones').val(e.observaciones ?? '');
+        // ─── Agregar / quitar hembras ─────────────────────────────────────────
+        $(document).on('click', '#btn-agregar-hembra', function() {
+            agregarFilaHembra();
+        });
+        $(document).on('click', '.btn-quitar-hembra', function() {
+            if ($('#lista-hembras .fila-hembra').length === 1) {
+                Swal.fire({
+                    theme: localStorage.getItem('theme') || 'dark',
+                    title: 'Atención',
+                    text: 'Debe haber al menos una hembra en el entore.',
+                    icon: 'warning'
+                });
+                return;
+            }
+            $(this).closest('.fila-hembra').remove();
+            renumerarFilas('#lista-hembras', 'hembras');
+        });
 
-                // Limpiar listas
-                $('#lista-machos').empty();
-                $('#lista-hembras').empty();
-
-                // Cargar machos (multitoro)
-                if (e.machos && e.machos.length > 0) {
-                    e.machos.forEach(m => agregarFilaMacho(m.id_bovino));
-                }
-
-                // Cargar hembras
-                if (e.hembras && e.hembras.length > 0) {
-                    e.hembras.forEach(h => agregarFilaHembra(h.id_bovino));
-                } else {
-                    agregarFilaHembra();
-                }
-
-                const titleElement = document.getElementById(
-                    'modal-formulario-titulo');
+        // ─── Botón Crear ──────────────────────────────────────────────────────
+        $(document).on('click', '.btn-crear', function() {
+            cargarBovinos().then(() => {
+                resetearFormulario();
+                const titleElement = document.getElementById('modal-formulario-titulo');
                 titleElement.innerHTML =
-                    '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR ENTORE';
+                    '<i class="fa-solid fa-duotone fa-plus"></i> CREAR ENTORE';
                 $('#modal-formulario').modal('show');
             });
         });
-    });
 
-    // ─── Botón Guardar ────────────────────────────────────────────────────
-    $(document).on('click', '#btn-guardar', function() {
-        const btn = $(this);
-        const id_entore = $('#form-crear-o-editar input[name="id_entore"]').val();
-        const url = id_entore == 0 ?
-            "{{ route('entores.create') }}" :
-            "{{ route('entores.update', ':id') }}".replace(':id', id_entore);
-        const type = id_entore == 0 ? 'POST' : 'PUT';
+        // ─── Botón Editar ─────────────────────────────────────────────────────
+        $(document).on('click', '.btn-editar', function() {
+            const id = $(this).data('id');
+            cargarBovinos().then(() => {
+                $.get("{{ route('entores.mostrar', ':id') }}".replace(':id', id), function(
+                    res) {
+                    const e = res.data;
 
-        const payload = recolectarPayload();
+                    $('#form-crear-o-editar input[name="id_entore"]').val(e.id_entore);
+                    $('#tipo_entore').val(e.tipo_entore).trigger('change');
+                    $('#fecha_inicio').val(e.fecha_inicio);
+                    $('#fecha_fin').val(e.fecha_fin ?? '');
+                    $('#codigo_pajuela').val(e.codigo_pajuela ?? '');
+                    $('#id_macho').val(e.id_macho ?? '').trigger('change');
+                    $('#observaciones').val(e.observaciones ?? '');
 
-        // Validación mínima en cliente
-        if (!payload.tipo_entore) {
-            Swal.fire({
-                theme: localStorage.getItem('theme') || 'dark',
-                title: 'Atención',
-                text: 'Seleccione el tipo de entore.',
-                icon: 'warning'
-            });
-            return;
-        }
-        if (payload.hembras.length === 0) {
-            Swal.fire({
-                theme: localStorage.getItem('theme') || 'dark',
-                title: 'Atención',
-                text: 'Debe agregar al menos una hembra.',
-                icon: 'warning'
-            });
-            return;
-        }
-        if (payload.tipo_entore === 'multitoro' && payload.machos.length === 0) {
-            Swal.fire({
-                theme: localStorage.getItem('theme') || 'dark',
-                title: 'Atención',
-                text: 'Debe agregar al menos un macho para el tipo multitoro.',
-                icon: 'warning'
-            });
-            return;
-        }
+                    // Limpiar listas
+                    $('#lista-machos').empty();
+                    $('#lista-hembras').empty();
 
-        btn.prop('disabled', true).html(
-            '<i class="fa-solid fa-duotone fa-spinner fa-spin"></i> Guardando...');
-
-        $.ajax({
-            url: url,
-            type: type,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            contentType: 'application/json',
-            data: JSON.stringify(payload),
-            success: function(response) {
-                Swal.fire({
-                    theme: localStorage.getItem('theme') || 'dark',
-                    title: 'Éxito',
-                    text: response.message,
-                    icon: 'success'
-                });
-                $('#modal-formulario').modal('hide');
-                $('#dataTable').DataTable().ajax.reload();
-                btn.prop('disabled', false).html(
-                    '<i class="fa-solid fa-duotone fa-save"></i> Guardar');
-            },
-            error: function(xhr) {
-                let respuesta = {};
-                try {
-                    respuesta = JSON.parse(xhr.responseText);
-                } catch (e) {
-                    respuesta = {
-                        message: 'Error desconocido'
-                    };
-                }
-
-                let htmlError = '';
-                if (respuesta.errors) {
-                    htmlError = Object.values(respuesta.errors).flat().join('<br>');
-                } else if (respuesta.message) {
-                    htmlError = respuesta.message;
-                } else {
-                    htmlError = 'Ocurrió un error inesperado.';
-                }
-
-                Swal.fire({
-                    theme: localStorage.getItem('theme') || 'dark',
-                    title: 'Error',
-                    html: 'Ocurrió un error al intentar la acción:<br>' +
-                        htmlError,
-                    icon: 'error'
-                });
-                btn.prop('disabled', false).html(
-                    '<i class="fa-solid fa-duotone fa-save"></i> Guardar');
-            }
-        });
-    });
-
-    // ─── Cambiar estado (archivar / restaurar) ────────────────────────────
-    $(document).on('click', '.btn-cambiar-estado', function() {
-        const id = $(this).data('id');
-        const estadoActual = $(this).data('estado');
-        const accion = estadoActual === 'activo' ? 'archivar' : 'restaurar';
-
-        Swal.fire({
-            theme: localStorage.getItem('theme') || 'dark',
-            title: '¡ATENCIÓN!',
-            html: `¿Estás seguro de <b>${accion}</b> este entore?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'No, cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "{{ route('entores.delete', ':id') }}".replace(':id', id),
-                    type: 'PATCH',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    data: {
-                        id_entore: id
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            theme: localStorage.getItem('theme') ||
-                                'dark',
-                            title: 'Actualizado',
-                            text: response.message,
-                            icon: 'success'
-                        });
-                        $('#dataTable').DataTable().ajax.reload();
-                    },
-                    error: function(xhr) {
-                        let respuesta = {};
-                        try {
-                            respuesta = JSON.parse(xhr.responseText);
-                        } catch (e) {
-                            respuesta = {
-                                message: 'Error desconocido'
-                            };
-                        }
-                        Swal.fire({
-                            theme: localStorage.getItem('theme') ||
-                                'dark',
-                            title: 'Error',
-                            text: `No se pudo ${accion} el entore: ` + (
-                                respuesta.message || ''),
-                            icon: 'error'
-                        });
+                    // Cargar machos (multitoro)
+                    if (e.machos && e.machos.length > 0) {
+                        e.machos.forEach(m => agregarFilaMacho(m.id_bovino));
                     }
+
+                    // Cargar hembras
+                    if (e.hembras && e.hembras.length > 0) {
+                        e.hembras.forEach(h => agregarFilaHembra(h.id_bovino));
+                    } else {
+                        agregarFilaHembra();
+                    }
+
+                    const titleElement = document.getElementById(
+                        'modal-formulario-titulo');
+                    titleElement.innerHTML =
+                        '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR ENTORE';
+                    $('#modal-formulario').modal('show');
                 });
-            }
+            });
         });
-    });
+
+        // ─── Botón Guardar ────────────────────────────────────────────────────
+        $(document).on('click', '#btn-guardar', function() {
+            const btn = $(this);
+            const id_entore = $('#form-crear-o-editar input[name="id_entore"]').val();
+            const url = id_entore == 0 ?
+                "{{ route('entores.create') }}" :
+                "{{ route('entores.update', ':id') }}".replace(':id', id_entore);
+            const type = id_entore == 0 ? 'POST' : 'PUT';
+
+            const payload = recolectarPayload();
+
+            // Validación mínima en cliente
+            if (!payload.tipo_entore) {
+                Swal.fire({
+                    theme: localStorage.getItem('theme') || 'dark',
+                    title: 'Atención',
+                    text: 'Seleccione el tipo de entore.',
+                    icon: 'warning'
+                });
+                return;
+            }
+            if (payload.hembras.length === 0) {
+                Swal.fire({
+                    theme: localStorage.getItem('theme') || 'dark',
+                    title: 'Atención',
+                    text: 'Debe agregar al menos una hembra.',
+                    icon: 'warning'
+                });
+                return;
+            }
+            if (payload.tipo_entore === 'multitoro' && payload.machos.length === 0) {
+                Swal.fire({
+                    theme: localStorage.getItem('theme') || 'dark',
+                    title: 'Atención',
+                    text: 'Debe agregar al menos un macho para el tipo multitoro.',
+                    icon: 'warning'
+                });
+                return;
+            }
+
+            btn.prop('disabled', true).html(
+                '<i class="fa-solid fa-duotone fa-spinner fa-spin"></i> Guardando...');
+
+            $.ajax({
+                url: url,
+                type: type,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(response) {
+                    Swal.fire({
+                        theme: localStorage.getItem('theme') || 'dark',
+                        title: 'Éxito',
+                        text: response.message,
+                        icon: 'success'
+                    });
+                    $('#modal-formulario').modal('hide');
+                    $('#dataTable').DataTable().ajax.reload();
+                    btn.prop('disabled', false).html(
+                        '<i class="fa-solid fa-duotone fa-save"></i> Guardar');
+                },
+                error: function(xhr) {
+                    let respuesta = {};
+                    try {
+                        respuesta = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        respuesta = {
+                            message: 'Error desconocido'
+                        };
+                    }
+
+                    let htmlError = '';
+                    if (respuesta.errors) {
+                        htmlError = Object.values(respuesta.errors).flat().join('<br>');
+                    } else if (respuesta.message) {
+                        htmlError = respuesta.message;
+                    } else {
+                        htmlError = 'Ocurrió un error inesperado.';
+                    }
+
+                    Swal.fire({
+                        theme: localStorage.getItem('theme') || 'dark',
+                        title: 'Error',
+                        html: 'Ocurrió un error al intentar la acción:<br>' +
+                            htmlError,
+                        icon: 'error'
+                    });
+                    btn.prop('disabled', false).html(
+                        '<i class="fa-solid fa-duotone fa-save"></i> Guardar');
+                }
+            });
+        });
+
+        // ─── Cambiar estado (archivar / restaurar) ────────────────────────────
+        $(document).on('click', '.btn-cambiar-estado', function() {
+            const id = $(this).data('id');
+            const estadoActual = $(this).data('estado');
+            const accion = estadoActual === 'activo' ? 'archivar' : 'restaurar';
+
+            Swal.fire({
+                theme: localStorage.getItem('theme') || 'dark',
+                title: '¡ATENCIÓN!',
+                html: `¿Estás seguro de <b>${accion}</b> este entore?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: `Sí, ${accion}`,
+                cancelButtonText: 'No, cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('entores.delete', ':id') }}".replace(':id', id),
+                        type: 'PATCH',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: {
+                            id_entore: id
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                theme: localStorage.getItem('theme') ||
+                                    'dark',
+                                title: 'Actualizado',
+                                text: response.message,
+                                icon: 'success'
+                            });
+                            $('#dataTable').DataTable().ajax.reload();
+                        },
+                        error: function(xhr) {
+                            let respuesta = {};
+                            try {
+                                respuesta = JSON.parse(xhr.responseText);
+                            } catch (e) {
+                                respuesta = {
+                                    message: 'Error desconocido'
+                                };
+                            }
+                            Swal.fire({
+                                theme: localStorage.getItem('theme') ||
+                                    'dark',
+                                title: 'Error',
+                                text: `No se pudo ${accion} el entore: ` + (
+                                    respuesta.message || ''),
+                                icon: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
 
     });
 </script>
