@@ -1,4 +1,4 @@
-<!-- Modal para crear y editar libros -->
+<!-- Modal para crear y editar -->
 <div class="modal fade" id="modal-formulario" tabindex="-1" aria-labelledby="modal-formulario-titulo" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

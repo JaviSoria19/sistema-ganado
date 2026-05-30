@@ -24,8 +24,8 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('potreros') ? 'active' : '' }}" aria-current="page"
-                            href="{{ route('potreros.index') }}"><i class="fa-solid fa-duotone fa-cow"></i>
+                        <a class="nav-link {{ request()->is('bovinos') ? 'active' : '' }}" aria-current="page"
+                            href="{{ route('bovinos.index') }}"><i class="fa-solid fa-duotone fa-cow"></i>
                             Bovinos</a>
                     </li>
 

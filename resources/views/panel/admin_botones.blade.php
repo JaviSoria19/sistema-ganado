@@ -24,7 +24,7 @@
     </div>
 
     <div class="col-6 col-md-4 col-lg-2 d-flex justify-content-center mb-3">
-        <a class="btn btn-sq-lg btn-cow-brown" href="{{ route('ventas.crear') }}">
+        <a class="btn btn-sq-lg btn-cow-brown" href="{{ route('bovinos.index') }}">
             <div>
                 <i class="fa-solid fa-duotone fa-cow fa-2xl"></i><br />Bovinos
             </div>

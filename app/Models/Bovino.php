@@ -90,9 +90,9 @@ class Bovino extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_bovinos($id_potrero = null, $origen = null, $genero = null)
+    public function get_all_bovinos($id_potrero = null, $origen = null, $genero = null, $estado = null)
     {
-        $query = Bovino::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('fecha_nacimiento', 'ASC');
+        $query = Bovino::with('potrero', 'entore', 'padre', 'madre', 'creado', 'modificado', 'eliminado')->orderBy('fecha_nacimiento', 'ASC');
 
         if ($id_potrero) {
             $query->where('id_potrero', $id_potrero);
@@ -106,11 +106,15 @@ class Bovino extends Model
             $query->where('genero', $genero);
         }
 
+        if ($estado) {
+            $query->where('estado', $estado);
+        }
+
         return $query->get();
     }
 
     public function get_bovino($id_bovino)
     {
-        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'creado', 'modificado', 'eliminado')->find($id_bovino);
+        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'ventas', 'creado', 'modificado', 'eliminado')->find($id_bovino);
     }
 }
