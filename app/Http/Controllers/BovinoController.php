@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BovinoValidation;
 use App\Models\Bovino;
 use App\Models\Potrero;
+use App\Models\Entore;
+use App\Models\PesajeHistorico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -18,6 +20,7 @@ class BovinoController extends Controller
         }
 
         $potreros = (new Potrero())->get_all_potreros();
+
         return view('bovinos.index', [
             'head_title' => 'GESTIÓN DE BOVINOS',
             'potreros' => $potreros
@@ -71,7 +74,75 @@ class BovinoController extends Controller
         ]);
     }
 
-    public function create(Request $request)
+    public function create(BovinoValidation $request)
+    {
+        if (!session('tiene_acceso')) {
+            return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
+        }
+
+        $bovino = new Bovino();
+
+        $bovino->id_potrero               = $request->id_potrero;
+        $bovino->id_entore                = $request->id_entore;
+        $bovino->id_padre                 = $request->id_padre;
+        $bovino->id_madre                 = $request->id_madre;
+        $bovino->origen                   = $request->origen;
+        $bovino->identificador            = $request->identificador;
+        $bovino->genero                   = $request->genero;
+        $bovino->tiene_identificador_oreja = $request->tiene_identificador_oreja ? '1' : '0';
+        $bovino->tiene_identificador_lomo  = $request->tiene_identificador_lomo ? '1' : '0';
+        $bovino->peso_nacimiento          = $request->peso_nacimiento;
+        $bovino->peso_destete             = $request->peso_destete;
+        $bovino->peso_actual              = $request->peso_actual;
+        $bovino->color_nacimiento         = $request->color_nacimiento;
+        $bovino->color_actual             = $request->color_actual;
+        $bovino->fecha_nacimiento         = $request->fecha_nacimiento;
+        $bovino->observaciones            = $request->observaciones;
+        $bovino->creado_por           = session('id_usuario');
+
+        if ($request->id_madre && $request->id_padre) {
+            $bovino->id_entore = null; // Si se especifican padre y madre, se asume que no es un entore
+        }
+
+        if ($request->id_madre && $request->id_entore) {
+            $bovino->id_padre = null; // Si se especifican padre y entore, se asume que no se conoce el padre específico (multitoro o inseminación) y se deja nulo el id_padre
+        }
+
+        // Si se especifica madre pero no padre ni entore, buscar el entore correspondiente
+        if ($request->id_madre && !$request->id_padre && !$request->id_entore) {
+            $entore = DB::table('entores_detalles as ed')
+                ->join('entores as e', 'ed.id_entore', '=', 'e.id_entore')
+                ->where('ed.id_hembra', $request->id_madre)
+                ->where('e.estado', 'activo')
+                ->orderBy('e.fecha_inicio', 'desc')
+                ->select('e.id_entore', 'e.tipo_entore', 'e.id_macho')
+                ->first();
+
+            if ($entore) {
+                $entoreMessage = ", se encontró un entore activo para la madre especificada: ";
+                if ($entore->tipo_entore === 'unitoro') {
+                    $bovino->id_padre  = $entore->id_macho;
+                    $bovino->id_entore = null;
+                    $entoreMessage = $entoreMessage . "Se asignó el padre automáticamente por ser un entore unitoro.";
+                } else {
+                    // inseminacion o multitoro
+                    $bovino->id_entore = $entore->id_entore;
+                    $bovino->id_padre  = null;
+                    $entoreMessage = $entoreMessage . "Se asignó el entore automáticamente por ser un entore de tipo '{$entore->tipo_entore}'.";
+                }
+            }
+        }
+
+        $bovino->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bovino creado correctamente' . ($entoreMessage ?? ''),
+            'bovino'  => $bovino,
+        ]);
+    }
+
+    public function create_transaction(Request $request)
     {
         if (!session('tiene_acceso')) {
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
@@ -176,6 +247,16 @@ class BovinoController extends Controller
 
         $bovino = (new Bovino())->get_bovino($id_bovino);
 
+        // Si el peso actual ha cambiado, se registra un nuevo registro en la tabla de pesaje histórica.
+        if($bovino->peso_actual != $request->peso_actual) {
+            $pesaje_historico = new PesajeHistorico();
+            $pesaje_historico->id_bovino = $bovino->id_bovino;
+            $pesaje_historico->peso = $request->peso_actual;
+            $pesaje_historico->fecha = date('Y-m-d');
+            $pesaje_historico->creado_por = session('id_usuario');
+            $pesaje_historico->save();
+        }
+
         $bovino->id_potrero               = $request->id_potrero;
         $bovino->id_entore                = $request->id_entore;
         $bovino->id_padre                 = $request->id_padre;
@@ -214,7 +295,7 @@ class BovinoController extends Controller
 
         $bovino = (new Bovino())->get_bovino($request->id_bovino);
 
-        if($bovino->estado === 'vendido'){
+        if ($bovino->estado === 'vendido') {
             return response()->json([
                 'success' => false,
                 'message' => 'No se puede modificar el estado de un bovino que fue vendido.'

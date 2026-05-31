@@ -1,11 +1,97 @@
 <script>
     const unidadAnimal = {{ session('unidad_animal') }};
 
+    function cargarEntoresSelect() {
+        $.ajax({
+            url: "{{ route('entores.listar') }}",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                let $select = $("#id_entore");
+                $select.empty();
+                $select.append('<option value="">Sin entore</option>');
+
+                $.each(response.data, function(i, entore) {
+                    if (entore.estado == 'inactivo')
+                        return; // Omitir entores inactivos
+
+                    $select.append(
+                        `<option value="${entore.id_entore}">
+                            ${entore.tipo_entore.charAt(0).toUpperCase() + entore.tipo_entore.slice(1)} - ${new Date(entore.fecha_inicio).toLocaleDateString()}
+                        </option>`
+                    );
+                });
+            }
+        });
+    }
+
+    function cargarPadresSelect() {
+        $.ajax({
+            url: "{{ route('bovinos.listar') }}?genero=macho&estado=activo",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                let $select = $("#id_padre");
+                $select.empty();
+                $select.append('<option value="">Sin padre</option>');
+
+                $.each(response.data, function(i, bovino) {
+                    if (bovino.estado == 'inactivo' || bovino.estado == 'vendido')
+                        return; // Omitir bovinos inactivos o vendidos
+                    const carimbo = bovino.fecha_nacimiento ? `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
+                    const potrero = bovino.potrero ? `${bovino.potrero.nombre}` : '';
+                    $select.append(
+                        `<option value="${bovino.id_bovino}">
+                            ${carimbo} ${bovino.identificador} (${bovino.color_actual}) P:${potrero}
+                        </option>`
+                    );
+                });
+            }
+        });
+    }
+
+    function cargarMadresSelect() {
+        $.ajax({
+            url: "{{ route('bovinos.listar') }}?genero=hembra&estado=activo",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                let $select = $("#id_madre");
+                $select.empty();
+                $select.append('<option value="">Sin madre</option>');
+
+                $.each(response.data, function(i, bovino) {
+                    if (bovino.estado == 'inactivo' || bovino.estado == 'vendido')
+                        return; // Omitir bovinos inactivos o vendidos
+                    const carimbo = bovino.fecha_nacimiento ? `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
+                    const potrero = bovino.potrero ? `${bovino.potrero.nombre}` : '';
+                    $select.append(
+                        `<option value="${bovino.id_bovino}">
+                            ${carimbo} ${bovino.identificador} (${bovino.color_actual}) P:${potrero}
+                        </option>`
+                    );
+                });
+            }
+        });
+    }
+
     $(document).ready(function() {
+        cargarEntoresSelect();
+        cargarPadresSelect();
+        cargarMadresSelect();
+
+        $('.select2').select2({
+            width: '100%',
+            language: "es",
+            dropdownCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+            selectionCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+            dropdownParent: $('#modal-formulario'),
+        });
+
         $("#form-filter-bovinos").on("click", function(e) {
-                e.preventDefault();
-                $("#dataTable").DataTable().ajax.reload();
-            });
+            e.preventDefault();
+            $("#dataTable").DataTable().ajax.reload();
+        });
 
         $("#dataTable").DataTable({
             processing: true,
@@ -228,7 +314,7 @@
                 }
             ],
             columnDefs: [{
-                targets: [2,3],
+                targets: [2, 3],
                 width: '200px',
             }, ],
             responsive: false,
@@ -269,34 +355,58 @@
 
         $(document).on('click', '.btn-crear', function() {
             $('#form-crear-o-editar input[name="id_bovino"]').val(0);
-            $('#form-crear-o-editar input[name="nombre"]').val('');
-            $('#form-crear-o-editar input[name="ubicacion"]').val('');
-            $('#form-crear-o-editar input[name="superficie"]').val('');
-            $('#form-crear-o-editar select[name="tipo_pasto"]').val('');
-            $('#form-crear-o-editar select[name="estado_potrero"]').val('').trigger('change');
-            $('#form-crear-o-editar select[name="disponibilidad_agua"]').val('').trigger('change');
-            $('#form-crear-o-editar input[name="capacidad_carga_actual"]').val('').trigger('change');
+            $('#form-crear-o-editar select[name="id_potrero"]').val('').trigger('change');
+            $('#form-crear-o-editar select[name="origen"]').val('').trigger('change');
+            $('#form-crear-o-editar input[name="identificador"]').val('');
+            $('#form-crear-o-editar input[name="fecha_nacimiento"]').val('{{ date('Y-m-d') }}');
+            $('#form-crear-o-editar select[name="genero"]').val('').trigger('change');
+            $('#form-crear-o-editar select[name="id_entore"]').val('').trigger('change');
+            $('#form-crear-o-editar select[name="id_padre"]').val('').trigger('change');
+            $('#form-crear-o-editar select[name="id_madre"]').val('').trigger('change');
+            $('#form-crear-o-editar input[name="peso_nacimiento"]').val('');
+            $('#form-crear-o-editar input[name="peso_destete"]').val('');
+            $('#form-crear-o-editar input[name="peso_actual"]').val('');
+            $('#form-crear-o-editar input[name="color_nacimiento"]').val('');
+            $('#form-crear-o-editar input[name="color_actual"]').val('');
+            $('#form-crear-o-editar input[name="tiene_identificador_oreja"]').prop('checked', false);
+            $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked', false);
+            $('#form-crear-o-editar textarea[name="observaciones"]').val('');
 
             const titleElement = document.getElementById('modal-formulario-titulo');
-            titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR POTRERO';
+            titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR BOVINO';
             $('#modal-formulario').modal('show');
         });
 
-
-
         $(document).on('click', '.btn-editar', function() {
-            const id = $(this).data('id');
+    const id = $(this).data('id');
 
-            $.get("{{ route('bovinos.index') . '/' }}" + id, function(bovino) {
-                $('#form-crear-o-editar input[name="id_bovino"]').val(bovino.data.id_bovino);
+    $.get("{{ route('bovinos.index') . '/' }}" + id, function(bovino) {
+        const data = bovino.data;
+        const carimbo = data.fecha_nacimiento ? `C${new Date(data.fecha_nacimiento).getFullYear()}` : '';
+        const potrero = data.potrero ? `${data.potrero.nombre}` : '';
+        $('#form-crear-o-editar input[name="id_bovino"]').val(data.id_bovino);
+        $('#form-crear-o-editar select[name="id_potrero"]').val(data.id_potrero).trigger('change');
+        $('#form-crear-o-editar select[name="origen"]').val(data.origen).trigger('change');
+        $('#form-crear-o-editar input[name="identificador"]').val(data.identificador);
+        $('#form-crear-o-editar input[name="fecha_nacimiento"]').val(data.fecha_nacimiento);
+        $('#form-crear-o-editar select[name="genero"]').val(data.genero).trigger('change');
+        $('#form-crear-o-editar select[name="id_entore"]').val(data.id_entore).trigger('change');
+        $('#form-crear-o-editar select[name="id_padre"]').val(data.id_padre).trigger('change');
+        $('#form-crear-o-editar select[name="id_madre"]').val(data.id_madre).trigger('change');
+        $('#form-crear-o-editar input[name="peso_nacimiento"]').val(data.peso_nacimiento);
+        $('#form-crear-o-editar input[name="peso_destete"]').val(data.peso_destete);
+        $('#form-crear-o-editar input[name="peso_actual"]').val(data.peso_actual);
+        $('#form-crear-o-editar input[name="color_nacimiento"]').val(data.color_nacimiento);
+        $('#form-crear-o-editar input[name="color_actual"]').val(data.color_actual);
+        $('#form-crear-o-editar input[name="tiene_identificador_oreja"]').prop('checked', !!data.tiene_identificador_oreja);
+        $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked', !!data.tiene_identificador_lomo);
+        $('#form-crear-o-editar textarea[name="observaciones"]').val(data.observaciones);
 
-                const titleElement = document.getElementById('modal-formulario-titulo');
-                titleElement.innerHTML =
-                    '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR BOVINO';
-                $('#modal-formulario').modal('show');
-            });
-        });
-
+        const titleElement = document.getElementById('modal-formulario-titulo');
+        titleElement.innerHTML = `<i class="fa-solid fa-edit"></i> EDITAR BOVINO: ${carimbo} ${data.identificador} (${data.color_actual}) P:${potrero}`;
+        $('#modal-formulario').modal('show');
+    });
+});
 
         $(document).on('click', '#btn-guardar', function() {
             const btn = $(this);

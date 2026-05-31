@@ -1,5 +1,6 @@
-<form method="GET" class="row g-3 align-items-end">
-
+<form method="GET" class="row g-3 align-items-end border border-primary rounded p-3">
+    <h3><i class="fa-solid fa-duotone fa-filter"></i> Filtrar tabla de bovinos por:</h3>
+    <br>
     <div class="col-md-3">
         <label for="busqueda-potrero" class="form-label">Potrero</label>
         <select id="busqueda-potrero" name="potrero" class="form-select">

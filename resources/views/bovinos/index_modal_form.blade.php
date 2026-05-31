@@ -18,6 +18,9 @@
                                     class="text-danger">*</span></label>
                             <select class="form-select" id="id_potrero" name="id_potrero" required>
                                 <option value="" disabled selected>Seleccione un potrero</option>
+                                @foreach ($potreros as $potrero)
+                                    <option value="{{ $potrero->id_potrero }}">{{ $potrero->nombre }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -61,7 +64,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_entore" class="form-label">Entore</label>
-                            <select class="form-select" id="id_entore" name="id_entore">
+                            <select class="form-select select2" id="id_entore" name="id_entore">
                                 <option value="">Sin entore</option>
                             </select>
                             <div class="form-text">Solo si es multitoro o inseminación.</div>
@@ -72,14 +75,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="id_padre" class="form-label">Padre</label>
-                            <select class="form-select" id="id_padre" name="id_padre">
-                                <option value="">Sin registro</option>
+                            <select class="form-select select2" id="id_padre" name="id_padre">
                             </select>
                             <div class="form-text">Solo si es unitoro.</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="id_madre" class="form-label">Madre</label>
-                            <select class="form-select" id="id_madre" name="id_madre">
+                            <select class="form-select select2" id="id_madre" name="id_madre">
                                 <option value="">Sin registro</option>
                             </select>
                         </div>

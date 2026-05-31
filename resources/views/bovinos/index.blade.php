@@ -16,7 +16,7 @@
         <br>
 
         <div class="card-body">
-            @include('bovinos.datatable_filter_form')
+            @include('bovinos.index_datatable_filter_form')
         </div>
     </div>
 
@@ -63,7 +63,7 @@
 
     <div class="mb-3"></div>
 
-    @include('bovinos.modal_form')
+    @include('bovinos.index_modal_form')
 @endsection
 
 @section('scripts')
