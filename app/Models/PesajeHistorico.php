@@ -36,14 +36,15 @@ class PesajeHistorico extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_pesajes_historicos()
+    public function get_all_pesajes_historicos($id_bovino = null)
     {
-        return PesajeHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->orderBy('id_bovino', 'ASC')->get();
-    }
+        $query = PesajeHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->orderBy('id_bovino', 'ASC');
 
-    public function get_pesajes_historicos_por_bovino($id_bovino)
-    {
-        return PesajeHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->where('id_bovino', $id_bovino)->orderBy('fecha', 'ASC')->get();
+        if ($id_bovino) {
+            $query->where('id_bovino', $id_bovino);
+        }
+
+        return $query->get();
     }
 
     public function get_pesaje_historico($id_pesaje_historico)

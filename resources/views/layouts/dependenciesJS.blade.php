@@ -11,5 +11,7 @@
 <script src="{{ asset('/public/dependencies/sweetalert2/sweetalert2.js') }}"></script>
 <!-- Chart.JS -->
 <script src="{{ asset('/public/dependencies/chart.js-4.5.1/chart.min.js') }}"></script>
+<!-- SheetJS -->
+<script src="{{ asset('/public/dependencies/xlsx/xlsx.full.min.js') }}"></script>
 <!-- Custom JS -->
 <script src="{{ asset('/public/custom.js') }}"></script>

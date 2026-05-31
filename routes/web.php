@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EntoreController;
 use App\Http\Controllers\ParametroController;
+use App\Http\Controllers\PesajeHistoricoController;
 use App\Http\Controllers\PotreroController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
@@ -83,6 +84,16 @@ Route::controller(BovinoController::class)->group(function () {
     Route::patch('bovinos/{bovino}', 'delete')->name('bovinos.delete');
 
     Route::get('bovinos/{bovino}/detalles', 'view_details')->name('bovinos.detalles');
+});
+
+Route::controller(PesajeHistoricoController::class)->group(function () {
+    Route::get('pesajes-historicos', 'view_index')->name('pesajes-historicos.index');
+    Route::get('pesajes-historicos/crear', 'view_crear')->name('pesajes-historicos.crear');
+    Route::get('pesajes-historicos/listar', 'listar')->name('pesajes-historicos.listar');
+    Route::get('pesajes-historicos/{pesaje_historico}', 'mostrar')->name('pesajes-historicos.mostrar');
+    Route::post('pesajes-historicos', 'create')->name('pesajes-historicos.create');
+    Route::put('pesajes-historicos/{pesaje_historico}', 'update')->name('pesajes-historicos.update');
+    Route::patch('pesajes-historicos/{pesaje_historico}', 'delete')->name('pesajes-historicos.delete');
 });
 
 Route::controller(ParametroController::class)->group(function () {

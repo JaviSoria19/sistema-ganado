@@ -54,7 +54,7 @@ class Bovino extends Model
 
     public function pesajes_historicos()
     {
-        return $this->hasMany(PesajeHistorico::class, 'id_bovino', 'id_bovino');
+        return $this->hasMany(PesajeHistorico::class, 'id_bovino', 'id_bovino')->orderBy('fecha', 'ASC');
     }
 
     public function potrero()
