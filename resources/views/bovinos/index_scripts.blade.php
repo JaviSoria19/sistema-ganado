@@ -38,7 +38,8 @@
                 $.each(response.data, function(i, bovino) {
                     if (bovino.estado == 'inactivo' || bovino.estado == 'vendido')
                         return; // Omitir bovinos inactivos o vendidos
-                    const carimbo = bovino.fecha_nacimiento ? `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
+                    const carimbo = bovino.fecha_nacimiento ?
+                        `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
                     const potrero = bovino.potrero ? `${bovino.potrero.nombre}` : '';
                     $select.append(
                         `<option value="${bovino.id_bovino}">
@@ -63,7 +64,8 @@
                 $.each(response.data, function(i, bovino) {
                     if (bovino.estado == 'inactivo' || bovino.estado == 'vendido')
                         return; // Omitir bovinos inactivos o vendidos
-                    const carimbo = bovino.fecha_nacimiento ? `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
+                    const carimbo = bovino.fecha_nacimiento ?
+                        `C${new Date(bovino.fecha_nacimiento).getFullYear()}` : '';
                     const potrero = bovino.potrero ? `${bovino.potrero.nombre}` : '';
                     $select.append(
                         `<option value="${bovino.id_bovino}">
@@ -161,10 +163,68 @@
                     }
                 },
                 {
-                    // Categoría (se trabajará después)
+                    // Categoría generada con datatables según la edad, género y peso actual
                     data: null,
                     render: function(data, type, row) {
-                        return '-';
+                        const hoy = new Date();
+                        const nacimiento = new Date(row.fecha_nacimiento);
+                        const meses = (hoy.getFullYear() - nacimiento.getFullYear()) * 12 +
+                            (hoy.getMonth() - nacimiento.getMonth());
+                        const genero = row.genero;
+                        const peso = parseFloat(row.peso_actual);
+
+                        let categoria = '-';
+
+                        if (meses < 8) {
+                            categoria = genero === 'hembra' ? 'Ternera' : 'Ternero';
+
+                        } else if (meses < 12) {
+                            categoria = genero === 'hembra' ? 'Destetada' : 'Destetado';
+
+                        } else if (meses < 24) {
+                            categoria = genero === 'hembra' ? 'Vaquilla (De año)' : 'Torillo';
+
+                        } else if (meses < 36) {
+                            if (genero === 'hembra') {
+                                // Con peso suficiente: apta para 1er servicio
+                                // Sin peso: descarte de 1er servicio
+                                categoria = peso >= 180 ?
+                                    'Vaquilla 1er Servicio' :
+                                    'Vaquilla Descarte';
+                            } else {
+                                // No se puede distinguir Toro vs Toro Reproductor sin dato adicional
+                                categoria = 'Toro (2 años)';
+                            }
+
+                        } else if (meses < 48) {
+                            if (genero === 'hembra') {
+                                categoria = 'Vaquilla 1er Parto';
+                            } else {
+                                categoria = 'Toro (3 años)';
+                            }
+
+                        } else {
+                            categoria = genero === 'hembra' ? 'Vaca' : 'Toro';
+                        }
+
+                        const colores = {
+                            'Ternera': 'bg-info text-dark',
+                            'Ternero': 'bg-info text-dark',
+                            'Destetada': 'bg-primary',
+                            'Destetado': 'bg-primary',
+                            'Vaquilla (De año)': 'bg-warning text-dark',
+                            'Torillo': 'bg-warning text-dark',
+                            'Vaquilla 1er Servicio': 'bg-success',
+                            'Vaquilla Descarte': 'bg-danger',
+                            'Toro (2 años)': 'bg-warning text-dark',
+                            'Vaquilla 1er Parto': 'bg-success',
+                            'Toro (3 años)': 'bg-warning text-dark',
+                            'Vaca': 'bg-danger',
+                            'Toro': 'bg-primary',
+                        };
+
+                        const clase = colores[categoria] || 'bg-secondary';
+                        return `<span class="badge ${clase}">${categoria.toUpperCase()}</span>`;
                     }
                 },
                 {
@@ -206,6 +266,61 @@
                     data: "peso_actual",
                     render: function(data, type, row) {
                         return unidadAnimal ? (data / unidadAnimal).toFixed(2) : '-';
+                    }
+                },
+                {
+                    // Peso al Destete Ajustado (205 días)
+                    // Fórmula: ((peso_destete - peso_nacimiento) / días_al_destete) * 205 + peso_nacimiento
+                    data: null,
+                    render: function(data, type, row) {
+                        if (!row.peso_destete || !row.fecha_destete || !row.peso_nacimiento) {
+                            return '<span class="text-muted">-</span>';
+                        }
+
+                        const fechaNacimiento = new Date(row.fecha_nacimiento);
+                        const fechaDestete = new Date(row.fecha_destete);
+                        const diasAlDestete = Math.round(
+                            (fechaDestete - fechaNacimiento) / (1000 * 60 * 60 * 24)
+                        );
+
+                        if (diasAlDestete <= 0) {
+                            return '<span class="text-muted">-</span>';
+                        }
+
+                        const pesoNacimiento = parseFloat(row.peso_nacimiento);
+                        const pesoDestete = parseFloat(row.peso_destete);
+
+                        const pda = ((pesoDestete - pesoNacimiento) / diasAlDestete) * 205 +
+                            pesoNacimiento;
+
+                        return pda.toFixed(2) + ' kg';
+                    }
+                },
+                {
+                    // Ganancia Diaria de Peso (GDP)
+                    // Fórmula: (peso_actual - peso_nacimiento) / días de vida
+                    data: null,
+                    render: function(data, type, row) {
+                        if (!row.peso_actual || !row.peso_nacimiento || !row.fecha_nacimiento) {
+                            return '<span class="text-muted">-</span>';
+                        }
+
+                        const fechaNacimiento = new Date(row.fecha_nacimiento);
+                        const hoy = new Date();
+                        const diasDeVida = Math.round(
+                            (hoy - fechaNacimiento) / (1000 * 60 * 60 * 24)
+                        );
+
+                        if (diasDeVida <= 0) {
+                            return '<span class="text-muted">-</span>';
+                        }
+
+                        const pesoNacimiento = parseFloat(row.peso_nacimiento);
+                        const pesoActual = parseFloat(row.peso_actual);
+
+                        const gdp = (pesoActual - pesoNacimiento) / diasDeVida;
+
+                        return gdp.toFixed(3) + ' kg/día';
                     }
                 },
                 {
@@ -378,35 +493,49 @@
         });
 
         $(document).on('click', '.btn-editar', function() {
-    const id = $(this).data('id');
+            const id = $(this).data('id');
 
-    $.get("{{ route('bovinos.index') . '/' }}" + id, function(bovino) {
-        const data = bovino.data;
-        const carimbo = data.fecha_nacimiento ? `C${new Date(data.fecha_nacimiento).getFullYear()}` : '';
-        const potrero = data.potrero ? `${data.potrero.nombre}` : '';
-        $('#form-crear-o-editar input[name="id_bovino"]').val(data.id_bovino);
-        $('#form-crear-o-editar select[name="id_potrero"]').val(data.id_potrero).trigger('change');
-        $('#form-crear-o-editar select[name="origen"]').val(data.origen).trigger('change');
-        $('#form-crear-o-editar input[name="identificador"]').val(data.identificador);
-        $('#form-crear-o-editar input[name="fecha_nacimiento"]').val(data.fecha_nacimiento);
-        $('#form-crear-o-editar select[name="genero"]').val(data.genero).trigger('change');
-        $('#form-crear-o-editar select[name="id_entore"]').val(data.id_entore).trigger('change');
-        $('#form-crear-o-editar select[name="id_padre"]').val(data.id_padre).trigger('change');
-        $('#form-crear-o-editar select[name="id_madre"]').val(data.id_madre).trigger('change');
-        $('#form-crear-o-editar input[name="peso_nacimiento"]').val(data.peso_nacimiento);
-        $('#form-crear-o-editar input[name="peso_destete"]').val(data.peso_destete);
-        $('#form-crear-o-editar input[name="peso_actual"]').val(data.peso_actual);
-        $('#form-crear-o-editar input[name="color_nacimiento"]').val(data.color_nacimiento);
-        $('#form-crear-o-editar input[name="color_actual"]').val(data.color_actual);
-        $('#form-crear-o-editar input[name="tiene_identificador_oreja"]').prop('checked', !!data.tiene_identificador_oreja);
-        $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked', !!data.tiene_identificador_lomo);
-        $('#form-crear-o-editar textarea[name="observaciones"]').val(data.observaciones);
+            $.get("{{ route('bovinos.index') . '/' }}" + id, function(bovino) {
+                const data = bovino.data;
+                const carimbo = data.fecha_nacimiento ?
+                    `C${new Date(data.fecha_nacimiento).getFullYear()}` : '';
+                const potrero = data.potrero ? `${data.potrero.nombre}` : '';
+                $('#form-crear-o-editar input[name="id_bovino"]').val(data.id_bovino);
+                $('#form-crear-o-editar select[name="id_potrero"]').val(data.id_potrero)
+                    .trigger('change');
+                $('#form-crear-o-editar select[name="origen"]').val(data.origen).trigger(
+                    'change');
+                $('#form-crear-o-editar input[name="identificador"]').val(data.identificador);
+                $('#form-crear-o-editar input[name="fecha_nacimiento"]').val(data
+                    .fecha_nacimiento);
+                $('#form-crear-o-editar select[name="genero"]').val(data.genero).trigger(
+                    'change');
+                $('#form-crear-o-editar select[name="id_entore"]').val(data.id_entore).trigger(
+                    'change');
+                $('#form-crear-o-editar select[name="id_padre"]').val(data.id_padre).trigger(
+                    'change');
+                $('#form-crear-o-editar select[name="id_madre"]').val(data.id_madre).trigger(
+                    'change');
+                $('#form-crear-o-editar input[name="peso_nacimiento"]').val(data
+                    .peso_nacimiento);
+                $('#form-crear-o-editar input[name="peso_destete"]').val(data.peso_destete);
+                $('#form-crear-o-editar input[name="peso_actual"]').val(data.peso_actual);
+                $('#form-crear-o-editar input[name="color_nacimiento"]').val(data
+                    .color_nacimiento);
+                $('#form-crear-o-editar input[name="color_actual"]').val(data.color_actual);
+                $('#form-crear-o-editar input[name="tiene_identificador_oreja"]').prop(
+                    'checked', !!data.tiene_identificador_oreja);
+                $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked',
+                    !!data.tiene_identificador_lomo);
+                $('#form-crear-o-editar textarea[name="observaciones"]').val(data
+                    .observaciones);
 
-        const titleElement = document.getElementById('modal-formulario-titulo');
-        titleElement.innerHTML = `<i class="fa-solid fa-edit"></i> EDITAR BOVINO: ${carimbo} ${data.identificador} (${data.color_actual}) P:${potrero}`;
-        $('#modal-formulario').modal('show');
-    });
-});
+                const titleElement = document.getElementById('modal-formulario-titulo');
+                titleElement.innerHTML =
+                    `<i class="fa-solid fa-edit"></i> EDITAR BOVINO: ${carimbo} ${data.identificador} (${data.color_actual}) P:${potrero}`;
+                $('#modal-formulario').modal('show');
+            });
+        });
 
         $(document).on('click', '#btn-guardar', function() {
             const btn = $(this);

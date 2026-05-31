@@ -42,6 +42,8 @@
                 <th>Peso de nacimiento (ua)</th> <!-- Generado con datatables en base a su contraparte en kg ✅-->
                 <th>Peso al destete (ua)</th> <!-- Generado con datatables en base a su contraparte en kg ✅ -->
                 <th>Peso actual (ua)</th> <!-- Generado con datatables en base a su contraparte en kg ✅ -->
+                <th>Peso ajustado a los 205 días</th>
+                <th>Ganancia diaria de peso</th>
                 <th>Color de nacimiento</th>
                 <th>Color actual</th>
                 <th>Fecha de nacimiento</th>

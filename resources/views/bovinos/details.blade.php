@@ -112,13 +112,21 @@
     <div class="row">
         <div class="col-md-4">
             <label for="peso_nacimiento">Peso al nacimiento (kg):</label>
-            <p class="form-control mb-3" id="peso_nacimiento">{{ $bovino->peso_nacimiento }}</p>
+            <p class="form-control mb-3" id="peso_nacimiento">
+                {{ $bovino->peso_nacimiento }}
+                <small class="text-muted">({{ round($bovino->peso_nacimiento / session('unidad_animal'), 2) }} ua)</small>
+            </p>
         </div>
         <div class="col-md-4">
             <label for="peso_destete">Peso al destete (kg):</label>
             <p class="form-control mb-3" id="peso_destete">
-                {{ $bovino->peso_destete }}
-                <small class="text-muted">({{ round($bovino->peso_destete / session('unidad_animal'), 2) }} ua)</small>
+                @if ($bovino->peso_destete && $bovino->fecha_destete)
+                    {{ $bovino->peso_destete }}
+                    <small class="text-muted">({{ round($bovino->peso_destete / session('unidad_animal'), 2) }} ua)</small>
+                    <small class="text-muted d-block">{{ date('d/m/Y', strtotime($bovino->fecha_destete)) }}</small>
+                @else
+                    <span class="text-muted">—</span>
+                @endif
             </p>
         </div>
         <div class="col-md-4">
@@ -126,6 +134,53 @@
             <p class="form-control mb-3 fw-bold text-primary" id="peso_actual">
                 {{ $bovino->peso_actual }}
                 <small class="text-muted">({{ round($bovino->peso_actual / session('unidad_animal'), 2) }} ua)</small>
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <label>Peso Ajustado a 205 días (PDA):</label>
+            <p class="form-control mb-3">
+                @if ($bovino->peso_destete && $bovino->fecha_destete && $bovino->peso_nacimiento)
+                    @php
+                        $dias_destete = (int) \Carbon\Carbon::parse($bovino->fecha_nacimiento)->diffInDays(
+                            $bovino->fecha_destete,
+                        );
+                        $pda =
+                            $dias_destete > 0
+                                ? round(
+                                    (($bovino->peso_destete - $bovino->peso_nacimiento) / $dias_destete) * 205 +
+                                        $bovino->peso_nacimiento,
+                                    2,
+                                )
+                                : null;
+                    @endphp
+                    @if ($pda)
+                        <span class="text-info fw-bold">{{ $pda }} kg</span>
+                    @else
+                        <span class="text-muted">—</span>
+                    @endif
+                @else
+                    <span class="text-muted">— <small>(requiere peso y fecha de destete)</small></span>
+                @endif
+            </p>
+        </div>
+        <div class="col-md-6">
+            <label>Ganancia Diaria de Peso (GDP):</label>
+            <p class="form-control mb-3">
+                @php
+                    $dias_vida = (int) \Carbon\Carbon::parse($bovino->fecha_nacimiento)->diffInDays(now());
+                    $gdp =
+                        $dias_vida > 0
+                            ? round(($bovino->peso_actual - $bovino->peso_nacimiento) / $dias_vida, 3)
+                            : null;
+                @endphp
+                @if ($gdp !== null)
+                    <span class="text-info fw-bold">{{ $gdp }} kg/día</span>
+                @else
+                    <span class="text-muted">—</span>
+                @endif
             </p>
         </div>
     </div>
