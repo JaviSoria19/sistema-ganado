@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-frame"></i> {{ $head_title }}</h1>
+    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-weight-scale"></i> {{ $head_title }}</h1>
 
     <a class="btn btn-primary mb-3" href="{{ route('pesajes-historicos.crear') }}">
         <i class="fa-solid fa-duotone fa-plus"></i> Registrar pesajes históricos</a>
