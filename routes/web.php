@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BovinoController;
+use App\Http\Controllers\CapacidadHistoricaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EntoreController;
@@ -105,6 +106,16 @@ Route::controller(RecuentoHistoricoController::class)->group(function () {
     Route::post('recuentos-historicos', 'create')->name('recuentos-historicos.create');
     Route::put('recuentos-historicos/{recuento_historico}', 'update')->name('recuentos-historicos.update');
     Route::patch('recuentos-historicos/{recuento_historico}', 'delete')->name('recuentos-historicos.delete');
+});
+
+Route::controller(CapacidadHistoricaController::class)->group(function () {
+    Route::get('capacidades-historicas', 'view_index')->name('capacidades-historicas.index');
+    Route::get('capacidades-historicas/crear', 'view_crear')->name('capacidades-historicas.crear');
+    Route::get('capacidades-historicas/listar', 'listar')->name('capacidades-historicas.listar');
+    Route::get('capacidades-historicas/{capacidad_historica}', 'mostrar')->name('capacidades-historicas.mostrar');
+    Route::post('capacidades-historicas', 'create')->name('capacidades-historicas.create');
+    Route::put('capacidades-historicas/{capacidad_historica}', 'update')->name('capacidades-historicas.update');
+    Route::patch('capacidades-historicas/{capacidad_historica}', 'delete')->name('capacidades-historicas.delete');
 });
 
 Route::controller(ParametroController::class)->group(function () {

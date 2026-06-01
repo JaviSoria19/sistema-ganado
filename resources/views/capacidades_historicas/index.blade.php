@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-frame"></i> {{ $head_title }}</h1>
+    <h1 class="text-center text-info fw-bold"><i class="fa-solid fa-duotone fa-weight-scale"></i> {{ $head_title }}</h1>
+
+    <a class="btn btn-primary mb-3" href="{{ route('capacidades-historicas.crear') }}">
+        <i class="fa-solid fa-duotone fa-plus"></i> Registrar capacidades históricos</a>
 
     <button type="button" class="btn btn-success mb-3 btn-crear" data-bs-toggle="modal" data-bs-target="#modal-formulario">
-        <i class="fa-solid fa-duotone fa-plus"></i> Crear potrero</button>
+        <i class="fa-solid fa-duotone fa-plus"></i> Crear capacidad histórica</button>
 
-    <a class="btn btn-primary mb-3" href="{{ route('capacidades-historicas.index') }}">
-        <i class="fa-solid fa-duotone fa-weight-scale"></i> Capacidades históricas</a>
-
-    <h2 class="text-info fw-bold">Lista de potreros</h2>
+    <h2 class="text-info fw-bold">Lista de capacidades históricos</h2>
 
     <div class="card p-3 mb-3">
         <p>Seleccione una opción para <i class="fa-solid fa-duotone fa-file-export"></i> exportar o <i
@@ -22,12 +22,8 @@
             <tr>
                 <th>#</th>
                 <th>Potrero</th>
-                <th>Ubicación</th>
-                <th>Superficie (ha)</th>
-                <th>Tipo de pasto</th>
-                <th>Estado del potrero</th>
-                <th>Disponibilidad de agua</th>
-                <th>Capacidad de carga actual (ua)</th>
+                <th>Capacidad de carga</th>
+                <th>Fecha</th>
 
                 <th>Estado</th>
                 <th>F. Registro</th>
@@ -43,9 +39,9 @@
 
     <div class="mb-3"></div>
 
-    @include('potreros.modal_form')
+    @include('capacidades_historicas.index_modal_form')
 @endsection
 
 @section('scripts')
-    @include('potreros.index_scripts')
+    @include('capacidades_historicas.index_scripts')
 @endsection

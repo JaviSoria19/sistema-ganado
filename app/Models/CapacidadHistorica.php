@@ -36,14 +36,15 @@ class CapacidadHistorica extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_capacidades_historicas()
+    public function get_all_capacidades_historicas($id_potrero = null)
     {
-        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('id_potrero', 'ASC')->get();
-    }
+        $query = CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->orderBy('id_potrero', 'ASC');
 
-    public function get_capacidades_historicas_por_potrero($id_potrero)
-    {
-        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->where('id_potrero', $id_potrero)->orderBy('id_potrero', 'ASC')->get();
+        if ($id_potrero !== null) {
+            $query->where('id_potrero', $id_potrero);
+        }
+
+        return $query->get();
     }
     
     public function get_capacidad_historica($id_capacidad_historica)

@@ -102,6 +102,12 @@ class RecuentoHistoricoController extends Controller
 
         /* Validar que no exista ya un recuento para ese bovino en esa fecha */
         foreach ($request->recuentos_historicos as $index => $rh) {
+
+            // Si esta fila ya tiene error (no se resolvió el bovino), saltarla
+            if (!isset($rh['id_bovino'])) {
+                continue;
+            }
+
             $existe = RecuentoHistorico::where('id_bovino', $rh['id_bovino'])
                 ->where('fecha', $rh['fecha'])
                 ->where('estado', 'activo')

@@ -97,6 +97,12 @@ class PesajeHistoricoController extends Controller
 
         /* Validar que no exista ya un pesaje para ese bovino en esa fecha */
         foreach ($request->pesajes_historicos as $index => $ph) {
+
+            // Si esta fila ya tiene error (no se resolvió el bovino), saltarla
+            if (!isset($ph['id_bovino'])) {
+                continue;
+            }
+            
             $existe = PesajeHistorico::where('id_bovino', $ph['id_bovino'])
                 ->where('fecha', $ph['fecha'])
                 ->where('estado', 'activo')
