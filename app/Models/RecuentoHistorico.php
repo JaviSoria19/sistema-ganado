@@ -36,14 +36,15 @@ class RecuentoHistorico extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_recuentos_historicos()
+    public function get_all_recuentos_historicos($id_bovino = null)
     {
-        return RecuentoHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->orderBy('id_bovino', 'ASC')->get();
-    }
+        $query = RecuentoHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->orderBy('id_bovino', 'ASC');
 
-    public function get_recuentos_historicos_por_bovino($id_bovino)
-    {
-        return RecuentoHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->where('id_bovino', $id_bovino)->orderBy('fecha', 'ASC')->get();
+        if ($id_bovino) {
+            $query->where('id_bovino', $id_bovino);
+        }
+
+        return $query->get();
     }
 
     public function get_recuento_historico($id_recuento_historico)

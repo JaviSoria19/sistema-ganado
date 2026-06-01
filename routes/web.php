@@ -7,6 +7,7 @@ use App\Http\Controllers\EntoreController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\PesajeHistoricoController;
 use App\Http\Controllers\PotreroController;
+use App\Http\Controllers\RecuentoHistoricoController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\VentaController;
 
@@ -94,6 +95,16 @@ Route::controller(PesajeHistoricoController::class)->group(function () {
     Route::post('pesajes-historicos', 'create')->name('pesajes-historicos.create');
     Route::put('pesajes-historicos/{pesaje_historico}', 'update')->name('pesajes-historicos.update');
     Route::patch('pesajes-historicos/{pesaje_historico}', 'delete')->name('pesajes-historicos.delete');
+});
+
+Route::controller(RecuentoHistoricoController::class)->group(function () {
+    Route::get('recuentos-historicos', 'view_index')->name('recuentos-historicos.index');
+    Route::get('recuentos-historicos/crear', 'view_crear')->name('recuentos-historicos.crear');
+    Route::get('recuentos-historicos/listar', 'listar')->name('recuentos-historicos.listar');
+    Route::get('recuentos-historicos/{recuento_historico}', 'mostrar')->name('recuentos-historicos.mostrar');
+    Route::post('recuentos-historicos', 'create')->name('recuentos-historicos.create');
+    Route::put('recuentos-historicos/{recuento_historico}', 'update')->name('recuentos-historicos.update');
+    Route::patch('recuentos-historicos/{recuento_historico}', 'delete')->name('recuentos-historicos.delete');
 });
 
 Route::controller(ParametroController::class)->group(function () {

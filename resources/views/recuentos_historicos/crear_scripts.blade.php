@@ -1,19 +1,19 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        const tableBody = document.querySelector('#table-pesajes-historicos tbody');
+        const tableBody = document.querySelector('#table-recuentos-historicos tbody');
         const fileInput = document.getElementById('excel-file');
         const btnGuardar = document.getElementById('btn-guardar');
 
         // ─── Helpers ────────────────────────────────────────────────────────────────
 
-        function crearFila(carimbo = '', identificador = '', peso = '', fecha = '') {
+        function crearFila(carimbo = '', identificador = '', estadoRecuento = '', fecha = '') {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="text-center align-middle fila-numero"></td>
                 <td><input type="number" class="form-control form-control-sm" placeholder="Carimbo" value="${carimbo}"></td>
                 <td><input type="text"   class="form-control form-control-sm" placeholder="Identificador" value="${identificador}"></td>
-                <td><input type="number" step="0.01" class="form-control form-control-sm" placeholder="Peso" value="${peso}"></td>
+                <td><input type="number" step="1" class="form-control form-control-sm" placeholder="Estado recuento" value="${estadoRecuento}"></td>
                 <td><input type="date"   class="form-control form-control-sm" value="${fecha}"></td>
                 <td class="text-center align-middle">
                     <button type="button" class="btn btn-danger btn-sm btn-eliminar-fila">
@@ -30,13 +30,13 @@
         }
 
         function reindexar() {
-            document.querySelectorAll('#table-pesajes-historicos tbody tr').forEach((tr, i) => {
+            document.querySelectorAll('#table-recuentos-historicos tbody tr').forEach((tr, i) => {
                 tr.querySelector('.fila-numero').textContent = i + 1;
             });
         }
 
         function limpiarErrores() {
-            document.querySelectorAll('#table-pesajes-historicos tbody tr').forEach(tr => {
+            document.querySelectorAll('#table-recuentos-historicos tbody tr').forEach(tr => {
                 tr.classList.remove('table-danger', 'table-warning');
                 tr.querySelector('.celda-observacion').textContent = '—';
             });
@@ -76,10 +76,10 @@
                     if (row.every(cell => cell === '')) return; // ignorar filas vacías
 
                     /* Se deja un espacio vacío antes de la primera coma para ignorar el primer elemento (#/Nro/Indice) */
-                    const [, carimbo, identificador, peso, fechaRaw] = row;
+                    const [, carimbo, identificador, estadoRecuento, fechaRaw] = row;
 
                     const fecha = excelSerialToDate(fechaRaw);
-                    tableBody.appendChild(crearFila(carimbo, identificador, peso, fecha));
+                    tableBody.appendChild(crearFila(carimbo, identificador, estadoRecuento, fecha));
                 });
 
                 reindexar();
@@ -99,7 +99,7 @@
         btnGuardar.addEventListener('click', function() {
             limpiarErrores();
 
-            const filas = document.querySelectorAll('#table-pesajes-historicos tbody tr');
+            const filas = document.querySelectorAll('#table-recuentos-historicos tbody tr');
 
             if (filas.length === 0) {
                 Swal.fire({
@@ -110,26 +110,26 @@
                 return;
             }
 
-            const pesajes_historicos = [];
+            const recuentos_historicos = [];
             let hayVacios = false;
 
             filas.forEach((tr, i) => {
                 const inputs = tr.querySelectorAll('input');
                 const carimbo = inputs[0].value.trim();
                 const identificador = inputs[1].value.trim();
-                const peso = inputs[2].value.trim();
+                const estado_recuento = inputs[2].value.trim();
                 const fecha = inputs[3].value.trim();
 
-                if (!carimbo || !identificador || !peso || !fecha) {
+                if (!carimbo || !identificador || !estado_recuento || !fecha) {
                     tr.classList.add('table-warning');
                     tr.querySelector('.celda-observacion').textContent = 'Campos incompletos.';
                     hayVacios = true;
                 }
 
-                pesajes_historicos.push({
+                recuentos_historicos.push({
                     carimbo,
                     identificador,
-                    peso,
+                    estado_recuento,
                     fecha
                 });
             });
@@ -147,7 +147,7 @@
             btnGuardar.innerHTML =
                 '<span class="spinner-border spinner-border-sm me-1"></span> Importando...';
 
-            fetch('{{ route('pesajes-historicos.create') }}', {
+            fetch('{{ route('recuentos-historicos.create') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -155,7 +155,7 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        pesajes_historicos
+                        recuentos_historicos
                     }),
                 })
                 .then(res => res.json().then(data => ({

@@ -7,7 +7,10 @@
         <i class="fa-solid fa-duotone fa-plus"></i> Crear bovino</button>
 
     <a class="btn btn-primary mb-3" href="{{ route('pesajes-historicos.index') }}">
-        <i class="fa-solid fa-duotone fa-plus"></i> Pesajes históricos</a>
+        <i class="fa-solid fa-duotone fa-weight-scale"></i> Pesajes históricos</a>
+
+    <a class="btn btn-primary mb-3" href="{{ route('recuentos-historicos.index') }}">
+        <i class="fa-solid fa-duotone fa-check"></i> Recuentos históricos</a>
 
     <h2 class="text-info fw-bold">Lista de bovinos</h2>
 
