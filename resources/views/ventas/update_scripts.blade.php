@@ -519,7 +519,7 @@
 
             $.ajax({
 
-                url: "{{ route('ventas.update', $venta->idVenta) }}",
+                url: "{{ route('ventas.update', $venta->id_venta) }}",
                 type: 'PUT',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -538,7 +538,7 @@
                         btnGuardarVenta.innerHTML =
                             '<i class="fa-solid fa-duotone fa-cart-circle-check"></i> ¡Éxito!';*/
                         window.open(
-                            `{{ route('ventas.index') }}/${response.venta.idVenta}/imprimir`,
+                            `{{ route('ventas.index') }}/${response.venta.id_venta}/imprimir`,
                             '_blank', 'noopener,noreferrer');
                         location.reload();
                     } else {
@@ -634,7 +634,7 @@
         function eliminarVenta() {
             const motivoInput = document.getElementById('motivoEliminacion');
             const _motivoEliminacion = motivoInput.value.trim();
-            const id = '{{ $venta->idVenta }}';
+            const id = '{{ $venta->id_venta }}';
             const btnEliminarVenta = document.getElementById('btnEliminarVenta');
             const btnGuardarVenta = document.getElementById('btnGuardarVenta');
 
@@ -676,7 +676,7 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         data: {
-                            idVenta: id,
+                            id_venta: id,
                             motivoEliminacion: _motivoEliminacion
                         },
                         success: function(response) {

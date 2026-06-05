@@ -5,6 +5,7 @@ use App\Http\Controllers\CapacidadHistoricaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\EntoreController;
+use App\Http\Controllers\PalpacionHistoricaController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\PesajeHistoricoController;
 use App\Http\Controllers\PotreroController;
@@ -73,14 +74,10 @@ Route::controller(EntoreController::class)->group(function () {
     Route::post('entores', 'create')->name('entores.create');
     Route::put('entores/{entore}', 'update')->name('entores.update');
     Route::patch('entores/{entore}', 'delete')->name('entores.delete');
-
-    //Route::get('entores/{entore}/detalles', 'view_details')->name('entores.detalles');
 });
 
 Route::controller(BovinoController::class)->group(function () {
     Route::get('bovinos', 'view_index')->name('bovinos.index');
-    //Route::get('bovinos/importar', 'view_importar')->name('bovinos.importar');
-    //Route::post('bovinos/importar', 'create_transaction')->name('bovinos.create-transaction');
     Route::get('bovinos/listar', 'listar')->name('bovinos.listar');
     Route::get('bovinos/{bovino}', 'mostrar')->name('bovinos.mostrar');
     Route::post('bovinos', 'create')->name('bovinos.create');
@@ -110,6 +107,16 @@ Route::controller(RecuentoHistoricoController::class)->group(function () {
     Route::patch('recuentos-historicos/{recuento_historico}', 'delete')->name('recuentos-historicos.delete');
 });
 
+Route::controller(PalpacionHistoricaController::class)->group(function () {
+    Route::get('palpaciones-historicas', 'view_index')->name('palpaciones-historicas.index');
+    Route::get('palpaciones-historicas/crear', 'view_crear')->name('palpaciones-historicas.crear');
+    Route::get('palpaciones-historicas/listar', 'listar')->name('palpaciones-historicas.listar');
+    Route::get('palpaciones-historicas/{palpacion_historica}', 'mostrar')->name('palpaciones-historicas.mostrar');
+    Route::post('palpaciones-historicas', 'create')->name('palpaciones-historicas.create');
+    Route::put('palpaciones-historicas/{palpacion_historica}', 'update')->name('palpaciones-historicas.update');
+    Route::patch('palpaciones-historicas/{palpacion_historica}', 'delete')->name('palpaciones-historicas.delete');
+});
+
 Route::controller(CapacidadHistoricaController::class)->group(function () {
     Route::get('capacidades-historicas', 'view_index')->name('capacidades-historicas.index');
     Route::get('capacidades-historicas/crear', 'view_crear')->name('capacidades-historicas.crear');
@@ -126,17 +133,15 @@ Route::controller(ParametroController::class)->group(function () {
 });
 
 Route::controller(VentaController::class)->group(function () {
-    // Vistas web
+    /* Vistas web */
     Route::get('ventas', 'view_index')->name('ventas.index');
     Route::get('ventas/crear', 'view_create')->name('ventas.crear');
     Route::get('ventas/{venta}/editar', 'view_update')->name('ventas.editar');
     Route::get('ventas/{venta}/imprimir', 'view_imprimir')->name('ventas.imprimir');
-    Route::get('ventas/reporte_utilidades', 'view_reporte_utilidades')->name('ventas.utilidades');
-    Route::get('ventas/reporte_perdidas', 'view_reporte_perdidas')->name('ventas.perdidas');
 
-    // Operaciones CRUD
-    Route::get('ventas/listar', 'listarVentas')->name('ventas.listar');
-    Route::get('ventas/{venta}', 'mostrarVenta')->name('ventas.mostrar');
+    /* Operaciones CRUD */
+    Route::get('ventas/listar', 'listar')->name('ventas.listar');
+    Route::get('ventas/{venta}', 'mostrar')->name('ventas.mostrar');
     Route::post('ventas', 'create')->name('ventas.create');
     Route::put('ventas/{venta}', 'update')->name('ventas.update');
     Route::patch('ventas/{venta}', 'delete')->name('ventas.delete');

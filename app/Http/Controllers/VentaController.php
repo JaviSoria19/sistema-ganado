@@ -7,29 +7,19 @@ use Illuminate\Http\Request;
 use App\Models\Venta;
 use App\Models\Pago;
 use App\Models\Bovino;
-use App\Models\Parametro;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
 class VentaController extends Controller
 {
-    public function view_index(Request $request)
+    public function view_index()
     {
         if (!session('tiene_acceso')) {
             return redirect()->route('login');
         }
-
-        $fechaInicio = $request->fechaInicio ? $request->fechaInicio : date('Y-m-d', strtotime('-1 months'));
-        $fechaFin = $request->fechaFin ? $request->fechaFin : date('Y-m-d');
-
-        if ($fechaInicio > $fechaFin) {
-            return redirect()->route('ventas.index')->withErrors(['error' => 'La fecha de inicio ingresada (' . date('d/m/Y', strtotime($fechaInicio)) . ') no puede ser mayor a la fecha de fin (' . date('d/m/Y', strtotime($fechaFin)) . ').']);
-        }
-
+        
         return view('ventas.index', [
             'head_title' => 'GESTIÓN DE VENTAS',
-            'fechaInicio' => $fechaInicio,
-            'fechaFin' => $fechaFin,
         ]);
     }
 
@@ -39,11 +29,8 @@ class VentaController extends Controller
             return redirect()->route('login');
         }
 
-        $parametro = (new Parametro())->get_parametro();
-
         return view('ventas.create', [
             'head_title' => 'CREAR VENTA',
-            'parametro' => $parametro,
         ]);
     }
 
@@ -54,11 +41,9 @@ class VentaController extends Controller
         }
 
         $venta = (new Venta())->get_venta($venta);
-        $parametro = (new Parametro())->get_parametro();
 
         return view('ventas.update', [
-            'head_title' => 'EDITAR VENTA N°' . $venta->idVenta,
-            'parametro' => $parametro,
+            'head_title' => 'EDITAR VENTA N°' . $venta->id_venta,
             'venta' => $venta,
         ]);
     }
@@ -77,50 +62,31 @@ class VentaController extends Controller
 
         $pdf = Pdf::loadView('ventas.imprimir', compact('venta'));
         $pdf->setPaper('letter');
-        return $pdf->stream('VENTA N° ' . $venta->idVenta . ' - ' . $fecha . '.pdf');
+        return $pdf->stream('VENTA N° ' . $venta->id_venta . ' - ' . $fecha . '.pdf');
     }
 
-    public function view_reporte_perdidas(Request $request)
-    {
-        if (!session('tiene_acceso')) {
-            return redirect()->route('login');
-        }
-
-        if (session('id_usuario') != 1){
-            return view('403')->with('head_title', 'ACCESO NO AUTORIZADO');
-        }
-
-        $fechaInicio = $request->fechaInicio ? $request->fechaInicio : date('Y-m-d', strtotime('-1 months'));
-        $fechaFin = $request->fechaFin ? $request->fechaFin : date('Y-m-d');
-
-        if ($fechaInicio > $fechaFin) {
-            return redirect()->route('ventas.utilidades')->withErrors(['error' => 'La fecha de inicio ingresada (' . date('d/m/Y', strtotime($fechaInicio)) . ') no puede ser mayor a la fecha de fin (' . date('d/m/Y', strtotime($fechaFin)) . ').']);
-        }
-
-        $ventas = (new Venta())->getVentasPorEstadoYSaldo('1', '<=', '0', 'DESC', $fechaInicio, $fechaFin);
-
-        return view('ventas.reporte_perdidas', [
-            'head_title' => 'REPORTE PERDIDAS',
-            'ventas' => $ventas,
-            'fechaInicio' => $fechaInicio,
-            'fechaFin' => $fechaFin,
-        ]);
-    }
-
-    public function listarVentas(Request $request)
+    public function listar(Request $request)
     {
         if (!session('tiene_acceso')) {
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
         }
 
-        $ventas = (new Venta())->get_all_ventas($request->fechaInicio, $request->fechaFin);
+        $filters = [
+            'fecha_inicio' => $request->fecha_inicio ?? null,
+            'fecha_fin' => $request->fecha_fin ?? null,
+            'estado' => $request->estado ?? null,
+            'creado_por' => $request->creado_por ?? null,
+            'id_cliente' => $request->id_cliente ?? null,
+        ];
+        
+        $ventas = (new Venta())->get_all_ventas($filters);
 
         return response()->json([
             'data' => $ventas
         ]);
     }
 
-    public function mostrarVenta(Request $request)
+    public function mostrar(Request $request)
     {
         if (!session('tiene_acceso')) {
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
@@ -141,62 +107,66 @@ class VentaController extends Controller
 
         $request->validate([
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
-            'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
-            'productos'   => 'required|array|min:1',
-            'productos.*.idBovino' => 'required|integer|exists:productos,idBovino',
-            'productos.*.precioUSD'  => 'required|numeric|min:0',
+            'fecha_venta'   => 'required|date',
+            'bovinos'   => 'required|array|min:1',
+            'bovinos.*.id_bovino' => 'required|integer|exists:bovinos,id_bovino',
             'pagos'       => 'nullable|array'
         ]);
 
-        // Validar productos antes de iniciar la transacción
-        foreach ($request->productos as $detalle) {
-            $producto = Bovino::find($detalle['idBovino']);
-            if (!$producto) {
+        // Validar bovinos antes de iniciar la transacción
+        foreach ($request->bovinos as $detalle) {
+            $bovino = Bovino::find($detalle['id_bovino']);
+            if (!$bovino) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'El producto con ID ' . $detalle['idBovino'] . ' no existe.'
+                    'message' => 'El bovino con ID ' . $detalle['id_bovino'] . ' no existe.'
                 ], 400);
             }
 
-            if ($producto->estado != 1) {
-                // Estado 2 = vendido, Estado 0 = eliminado
-                $estadoTexto = $producto->estado == 2 ? '<b class="text-primary">vendido</b>' : '<b class="text-secondary">eliminado</b>';
+            if ($bovino->estado != 'activo') {
+                $estadoTexto = $bovino->estado == 'vendido' ? '<b class="text-primary">vendido</b>' : '<b class="text-secondary">eliminado</b>';
                 return response()->json([
                     'success' => false,
-                    'message' => 'El producto con el código <b class="text-primary">' . $producto->codigoBovino . '</b> no está disponible para la venta (actualmente ' . $estadoTexto . '), remuévalo de la lista e intente nuevamente.',
+                    'message' => 'El bovino con el código <b class="text-primary">' . $bovino->identificador . '</b> no está disponible para la venta (actualmente ' . $estadoTexto . '), remuévalo de la lista e intente nuevamente.',
                 ], 400);
             }
         }
 
         DB::beginTransaction();
+
         try {
             $venta = new Venta();
-            $venta->id_usuario = session('id_usuario');
             $venta->id_cliente = $request->id_cliente;
-            $venta->idEmpleado = $request->idEmpleado;
-            $venta->modificado_por = session('id_usuario');
-            $venta->totalUSD = $request->totalUSD;
-            $venta->saldoUSD = $request->saldoUSD;
+            $venta->total = $request->total;
+            $venta->fecha_venta = $request->fecha_venta;
+            $venta->creado_por = session('id_usuario');
             $venta->save();
 
-            foreach ($request->productos as $detalle) {
-                $venta->productos()->attach($detalle['idBovino'], [
-                    'precioUSD' => $detalle['precioUSD']
+            foreach ($request->bovinos as $detalle) {
+                $venta->bovinos()->attach($detalle['id_bovino'], [
+                    'precio_fijo' => $detalle['precio_fijo'],
+                    'precio_kg' => $detalle['precio_kg'],
+                    'destare' => $detalle['destare'],
+                    'rendimiento' => $detalle['rendimiento'],
+                    'kg_peso_vivo' => $detalle['kg_peso_vivo'],
+                    'kg_peso_gancho' => $detalle['kg_peso_gancho'],
+                    'subtotal' => $detalle['subtotal'],
+                    'observacion' => $detalle['observacion'] ?? null,
                 ]);
 
-                $producto = Bovino::find($detalle['idBovino']);
-                $producto->estado = 2;
-                $producto->fechaVenta = Carbon::now();
-                $producto->save();
+                $bovino = Bovino::find($detalle['id_bovino']);
+                $bovino->estado = 'vendido';
+                $bovino->fecha_salida = now();
+                $bovino->save();
             }
 
             if (!empty($request->pagos)) {
                 foreach ($request->pagos as $pago) {
                     $p = new Pago();
-                    $p->idVenta = $venta->idVenta;
-                    $p->pagoUSD = $pago['pagoUSD'];
-                    $p->fechaPago = $pago['fechaPago'];
-                    $p->modificado_por = session('id_usuario');
+                    $p->id_venta = $venta->id_venta;
+                    $p->monto = $pago['monto'];
+                    $p->tipo_pago = $pago['tipo_pago'];
+                    $p->fecha_pago = $pago['fecha_pago'];
                     $p->save();
                 }
             }
@@ -206,7 +176,7 @@ class VentaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Venta registrada correctamente',
-                'venta'   => $venta->load(['productos', 'cliente'])
+                'venta'   => $venta->load(['bovinos', 'cliente'])
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -218,7 +188,7 @@ class VentaController extends Controller
     }
 
 
-    public function update(Request $request, $idVenta)
+    public function update(Request $request, $id_venta)
     {
         if (!session('tiene_acceso')) {
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
@@ -226,71 +196,74 @@ class VentaController extends Controller
 
         $request->validate([
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
-            'idEmpleado'  => 'nullable|integer|exists:empleados,idEmpleado',
-            'productos'   => 'required|array|min:1',
-            'productos.*.idBovino' => 'required|integer|exists:productos,idBovino',
-            'productos.*.precioUSD'  => 'required|numeric|min:0',
+            'fecha_venta'   => 'required|date',
+            'bovinos'   => 'required|array|min:1',
+            'bovinos.*.id_bovino' => 'required|integer|exists:bovinos,id_bovino',
+            'pagos'       => 'nullable|array'
         ]);
+
 
         DB::beginTransaction();
         try {
-            $venta = (new Venta())->get_venta($idVenta);
+            $venta = (new Venta())->get_venta($id_venta);
             $venta->id_cliente = $request->id_cliente;
-            $venta->idEmpleado = $request->idEmpleado;
+            $venta->total = $request->total;
+            $venta->fecha_venta = $request->fecha_venta;
             $venta->modificado_por = session('id_usuario');
-            $venta->totalUSD = $request->totalUSD;
-            $venta->saldoUSD = $request->saldoUSD;
             $venta->save();
 
-            // Obtener productos antes de la actualización
-            $productosAnteriores = $venta->productos->pluck('idBovino')->toArray();
-            $productosNuevos = collect($request->productos)->pluck('idBovino')->toArray();
+            // Obtener bovinos antes de la actualización
+            $bovinosAnteriores = $venta->bovinos->pluck('id_bovino')->toArray();
+            $bovinosNuevos = collect($request->bovinos)->pluck('id_bovino')->toArray();
 
-            // Identificar productos eliminados
-            $productosEliminados = array_diff($productosAnteriores, $productosNuevos);
+            // Identificar bovinos eliminados
+            $bovinosEliminados = array_diff($bovinosAnteriores, $bovinosNuevos);
 
-            // Revertir estado de los productos eliminados
-            foreach ($productosEliminados as $idProd) {
-                $producto = Bovino::find($idProd);
-                if ($producto) {
-                    $producto->estado = 1; // Disponible nuevamente
-                    $producto->fechaVenta = null;
-                    $producto->save();
+            // Revertir estado de los bovinos eliminados
+            foreach ($bovinosEliminados as $idBovino) {
+                $bovino = Bovino::find($idBovino);
+                if ($bovino) {
+                    $bovino->estado = 'activo';
+                    $bovino->fecha_salida = null;
+                    $bovino->save();
                 }
             }
 
-            // Elimina todos los 'detalles_ventas'
-            $venta->productos()->detach();
+            // Elimina todos los 'ventas_detalles'
+            $venta->bovinos()->detach();
 
-            foreach ($request->productos as $detalle) {
-                $venta->productos()->attach($detalle['idBovino'], [
-                    'precioUSD' => $detalle['precioUSD']
+            foreach ($request->bovinos as $detalle) {
+                $venta->bovinos()->attach($detalle['id_bovino'], [
+                    'precio_fijo' => $detalle['precio_fijo'],
+                    'precio_kg' => $detalle['precio_kg'],
+                    'destare' => $detalle['destare'],
+                    'rendimiento' => $detalle['rendimiento'],
+                    'kg_peso_vivo' => $detalle['kg_peso_vivo'],
+                    'kg_peso_gancho' => $detalle['kg_peso_gancho'],
+                    'subtotal' => $detalle['subtotal'],
+                    'observacion' => $detalle['observacion'] ?? null,
                 ]);
 
-                $producto = (new Bovino())->getBovino($detalle['idBovino']);
-                $producto->estado = 2;
-                $producto->fechaVenta = Carbon::now();
-                $producto->save();
+                $bovino = Bovino::find($detalle['id_bovino']);
+                $bovino->estado = 'vendido';
+                $bovino->fechaVenta = now();
+                $bovino->save();
             }
-
-            // Borrar pagos anteriores
-            /*Pago::where('idVenta', $venta->idVenta)->delete();*/
 
             // Insertar nuevos pagos
             foreach ($request->pagos as $pago) {
-                if ($pago['idPago'] == '0') {
+                if ($pago['id_pago'] == '0') {
                     $p = new Pago();
-                    $p->idVenta = $venta->idVenta;
-                    $p->pagoUSD = $pago['pagoUSD'];
-                    $p->fechaPago = $pago['fechaPago'];
-                    $p->modificado_por = session('id_usuario');
+                    $p->id_venta = $venta->id_venta;
+                    $p->monto = $pago['monto'];
+                    $p->fecha_pago = $pago['fecha_pago'];
                     $p->save();
                 } else {
-                    $p = (new Pago())->getPago($pago['idPago']);
+                    $p = Pago::find($pago['id_pago']);
                     // Actualizar solo si el pago es menor o igual a 0.00 (editable)
-                    if ($p->pagoUSD <= '0.00') {
-                        $p->pagoUSD = $pago['pagoUSD'];
-                        $p->fechaPago = $pago['fechaPago'];
+                    if ($p->monto <= '0.00') {
+                        $p->monto = $pago['monto'];
+                        $p->fecha_pago = $pago['fecha_pago'];
                         $p->fecha_registro = Carbon::now();
                         $p->modificado_por = session('id_usuario');
                         $p->save();
@@ -302,7 +275,7 @@ class VentaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Venta actualizada correctamente',
-                'venta'   => $venta->load(['productos', 'cliente', 'pagos'])
+                'venta'   => $venta->load(['bovinos', 'cliente', 'pagos'])
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -316,27 +289,30 @@ class VentaController extends Controller
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
         }
 
-        $request->validate([
-            'motivoEliminacion' => 'required|string|min:3|max:255',
-        ]);
+        if($request->motivo_eliminacion == null || $request->motivo_eliminacion == ''){
+            return response()->json([
+                'success' => false,
+                'message' => 'Debe proporcionar un motivo de eliminación para continuar'
+            ], 400);
+        }
 
-        $venta = (new Venta())->get_venta($request->idVenta);
-        $venta->estado = 0;
-        $venta->fechaEliminacion = now();
-        $venta->motivoEliminacion = $request->motivoEliminacion;
-        $venta->modificado_por = session('id_usuario');
+        $venta = (new Venta())->get_venta($request->id_venta);
+        $venta->motivo_eliminacion = $request->motivo_eliminacion;
+        $venta->estado = 'inactivo';
+        $venta->fecha_eliminacion = now();
+        $venta->eliminado_por = session('id_usuario');
         $venta->save();
 
-        foreach ($venta->productos as $producto) {
-            $p = (new Bovino())->getBovino($producto->idBovino);
-            $p->estado = 1;
-            $p->fechaVenta = null;
+        foreach ($venta->bovinos as $bovino) {
+            $p = Bovino::find($bovino->id_bovino);
+            $p->estado = 'activo';
+            $p->fecha_salida = null;
             $p->save();
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Venta eliminada correctamente, todos los productos involucrados retornaron al inventario',
+            'message' => 'Venta eliminada correctamente, todos los bovinos involucrados retornaron al sistema como activos',
             'venta'   => $venta
         ]);
     }

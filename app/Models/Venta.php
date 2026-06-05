@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class Venta extends Model
 {
@@ -21,10 +19,10 @@ class Venta extends Model
     public function bovinos()
     {
         return $this->belongsToMany(
-            Bovino::class,           // Modelo relacionado
-            'ventas_detalles',       // Tabla pivote
-            'id_venta',              // FK en la tabla pivote hacia ventas
-            'id_bovino'              // FK en la tabla pivote hacia bovinos
+            Bovino::class,           /* Modelo relacionado */
+            'ventas_detalles',       /* Tabla pivote */
+            'id_venta',              /* FK en la tabla pivote hacia ventas */
+            'id_bovino'              /* FK en la tabla pivote hacia bovinos */
         )->withPivot('precio_fijo', 'precio_kg', 'destare', 'rendimiento', 'kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
     }
 
@@ -56,46 +54,32 @@ class Venta extends Model
         return $this->belongsTo(Usuario::class, 'eliminado_por', 'id_usuario');
     }
 
-    public function get_all_ventas($fecha_inicio = null, $fecha_fin = null, $creado_por = null, $estado = null)
+    public function get_all_ventas(array $filters = [])
     {
-        $query = Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')
-            ->addSelect([
-                '*',
-                DB::raw('(
-                SELECT COALESCE(SUM(p.monto), 0)
-                FROM pagos p
-                WHERE p.id_venta = ventas.id_venta
-                AND p.estado = "activo"
-            ) AS total_pagado'),
-                DB::raw('(
-                ventas.total - (
-                    SELECT COALESCE(SUM(p.monto), 0)
-                    FROM pagos p
-                    WHERE p.id_venta = ventas.id_venta
-                    AND p.estado = "activo"
-                )
-            ) AS saldo'),
-            ])
-            ->orderBy('id_venta', 'ASC');
+        $query = Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->orderBy('id_venta', 'ASC');
 
-        if ($fecha_inicio && $fecha_fin) {
-            $query->whereBetween('fecha_registro', [
-                $fecha_inicio . ' 00:00:00',
-                $fecha_fin . ' 23:59:59'
+        if ($filters['fecha_inicio'] && $filters['fecha_fin']) {
+            $query->whereBetween('fecha_venta', [
+                $filters['fecha_inicio'],
+                $filters['fecha_fin']
             ]);
         }
 
-        if ($creado_por) {
-            $query->where('creado_por', $creado_por);
+        if ($filters['estado']) {
+            $query->where('estado', $filters['estado']);
         }
 
-        if (!is_null($estado)) {
-            $query->where('estado', $estado);
+        if ($filters['creado_por']) {
+            $query->where('creado_por', $filters['creado_por']);
+        }
+
+        if ($filters['id_cliente']) {
+            $query->where('id_cliente', $filters['id_cliente']);
         }
 
         return $query->get();
     }
-    
+
     public function get_venta($id_venta)
     {
         return Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->find($id_venta);

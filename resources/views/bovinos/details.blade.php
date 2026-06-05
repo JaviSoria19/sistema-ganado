@@ -386,6 +386,43 @@
         <div class="mb-3"></div>
     @endif
 
+    {{-- ======================== PALPACIONES ======================== --}}
+    @if ($bovino->genero === 'hembra' && $bovino->palpaciones_historicas->count() > 0)
+        <h2 class="text-info fw-bold mt-3">Palpaciones Históricas (solo hembras)</h2>
+        <table class="table table-bordered table-striped mb-3 dataTable" id="palpaciones-historicas">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($bovino->palpaciones_historicas as $palpacion)
+                    @php
+                        $resultado_class = match ($palpacion->resultado) {
+                            'p' => 'bg-success',
+                            'v' => 'bg-danger',
+                            default => 'bg-secondary',
+                        };
+
+                        $r = match ($palpacion->resultado) {
+                            'p' => 'Preñada',
+                            'v' => 'Vacía',
+                            default => 'Desconocido',
+                        };
+                    @endphp
+                    <tr>
+                        <td>{{ $loop->index + 1 }}</td>
+                        <td>{{ date('d/m/Y', strtotime($palpacion->fecha)) }}</td>
+                        <td><span class="badge {{ $resultado_class }}">{{ $r }}</span></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <div class="mb-3"></div>
+    @endif
+
     {{-- ======================== VENTAS ======================== --}}
     @if ($bovino->ventas->count() > 0)
         <h2 class="text-info fw-bold mt-3">Ventas</h2>

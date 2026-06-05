@@ -12,6 +12,9 @@
     <a class="btn btn-primary mb-3" href="{{ route('recuentos-historicos.index') }}">
         <i class="fa-solid fa-duotone fa-check"></i> Recuentos históricos</a>
 
+    <a class="btn btn-primary mb-3" href="{{ route('palpaciones-historicas.index') }}">
+        <i class="fa-solid fa-duotone fa-hand-holding-heart"></i> Palpaciones históricas</a>
+
     <h2 class="text-info fw-bold">Lista de bovinos</h2>
 
     <div class="card p-3 mb-3">

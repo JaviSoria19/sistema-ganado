@@ -84,7 +84,7 @@
                     }
                 },
                 columns: [{
-                        data: "idVenta",
+                        data: "id_venta",
                     },
                     {
                         data: "usuario.usuario",
@@ -184,11 +184,11 @@
                         render: function(data, type, row) {
                             return `
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('ventas.index') }}/${row.idVenta}/editar" class="btn btn-warning btn-sm btn-editar" data-toggle="tooltip" title="Editar" target="_blank" rel="noopener noreferrer">
+                                    <a href="{{ route('ventas.index') }}/${row.id_venta}/editar" class="btn btn-warning btn-sm btn-editar" data-toggle="tooltip" title="Editar" target="_blank" rel="noopener noreferrer">
                                         <i class="fa-duotone fa-solid fa-edit"></i>
                                     </a>
                                     <a class="btn {{ session('tema_preferido') == 'dark' ? 'btn-light' : 'btn-dark' }} btn-sm"
-                                        href="{{ route('ventas.index') }}/${row.idVenta}/imprimir" data-toggle="tooltip" title="Imprimir" target="_blank" rel="noopener noreferrer">
+                                        href="{{ route('ventas.index') }}/${row.id_venta}/imprimir" data-toggle="tooltip" title="Imprimir" target="_blank" rel="noopener noreferrer">
                                         <i class="fa-duotone fa-solid fa-print"></i>
                                     </a>
                                 </div>

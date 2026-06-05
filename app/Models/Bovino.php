@@ -57,6 +57,11 @@ class Bovino extends Model
         return $this->hasMany(PesajeHistorico::class, 'id_bovino', 'id_bovino')->orderBy('fecha', 'ASC');
     }
 
+    public function palpaciones_historicas()
+    {
+        return $this->hasMany(PalpacionHistorica::class, 'id_bovino', 'id_bovino')->orderBy('fecha', 'ASC');
+    }
+
     public function potrero()
     {
         return $this->belongsTo(Potrero::class, 'id_potrero', 'id_potrero');
@@ -115,6 +120,6 @@ class Bovino extends Model
 
     public function get_bovino($id_bovino)
     {
-        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'ventas', 'creado', 'modificado', 'eliminado')->find($id_bovino);
+        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'palpaciones_historicas', 'ventas', 'creado', 'modificado', 'eliminado')->find($id_bovino);
     }
 }

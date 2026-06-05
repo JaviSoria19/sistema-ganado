@@ -534,7 +534,7 @@
                         btnCrearVenta.innerHTML =
                             '<i class="fa-solid fa-duotone fa-cart-circle-check"></i> ¡Éxito!';
                         window.open(
-                            `{{ route('ventas.index') }}/${response.venta.idVenta}/imprimir`,
+                            `{{ route('ventas.index') }}/${response.venta.id_venta}/imprimir`,
                             '_blank', 'noopener,noreferrer');
                     } else {
                         btnCrearVenta.disabled = false;

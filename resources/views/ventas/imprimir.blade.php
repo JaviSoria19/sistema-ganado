@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <title>{{ helper_tituloPagina() }} | VENTA N° {{ $venta->idVenta }}
+        <title>{{ helper_tituloPagina() }} | VENTA N° {{ $venta->id_venta }}
             {{ $venta->estado == '0' ? '(ELIMINADA)' : '' }}</title>
         <!-- Bootstrap CSS -->
         <link href="{{ asset('/public/dependencies/bootstrapdompdf.css') }}" rel="stylesheet">
@@ -60,7 +60,7 @@
 
         {{-- <p
             class="font-weight-bold bg-{{ $venta->estado == '0' ? 'danger' : 'info' }} text-white m-2 text-center rounded align-middle">
-            VENTA N° {{ $venta?->idVenta }}
+            VENTA N° {{ $venta?->id_venta }}
             {{ $venta->estado == '0' ? '(ELIMINADA EL ' . date('d/m/Y H:i:s', strtotime($venta?->fechaEliminacion)) . ')' : '' }}
         </p> --}}
 
@@ -72,7 +72,7 @@
                         {{-- <span class="text-info">Usuario:</span> {{ $venta?->usuario->usuario }} --}}
                     </td>
                     <td class="bg-{{ $venta->estado == '0' ? 'danger' : 'info' }} text-center" style="width: 33%">
-                        VENTA N° {{ $venta?->idVenta }}
+                        VENTA N° {{ $venta?->id_venta }}
                     </td>
                     <td class="bg-{{ $venta->estado == '0' ? 'danger' : 'info' }} text-right" style="width: 33%">
                         F. Registro: {{ date('d/m/Y H:i:s', strtotime($venta?->fecha_registro)) }}

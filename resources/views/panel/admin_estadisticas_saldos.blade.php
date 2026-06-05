@@ -81,7 +81,7 @@
                 <tr>
                     <td>{{ $saldo_pendiente_detalle->empleado->nombreEmpleado }}</td>
                     <td>{{ $saldo_pendiente_detalle->cliente->nombreCliente }}</td>
-                    <td>{{ $saldo_pendiente_detalle->idVenta }}</td>
+                    <td>{{ $saldo_pendiente_detalle->id_venta }}</td>
                     <td class="fw-bold">
                         @foreach ($saldo_pendiente_detalle->productos as $producto)
                             <span class="text-primary">{{ $loop->index + 1 }}.</span>
@@ -102,10 +102,10 @@
                     <td>{{ date('d/m/Y H:i:s', strtotime($saldo_pendiente_detalle->fecha_registro)) }}</td>
                     <td class="text-center">
                         <div class="btn-group" role="group">
-                            <a href="{{ route('ventas.editar', $saldo_pendiente_detalle->idVenta) }}"
+                            <a href="{{ route('ventas.editar', $saldo_pendiente_detalle->id_venta) }}"
                                 class="btn btn-warning btn-sm" title="Editar" target="_blank"
                                 rel="noopener noreferrer"><i class="fa-solid fa-duotone fa-edit"></i></a>
-                            <a href="{{ route('ventas.imprimir', $saldo_pendiente_detalle->idVenta) }}"
+                            <a href="{{ route('ventas.imprimir', $saldo_pendiente_detalle->id_venta) }}"
                                 class="btn {{ session('tema_preferido') == 'dark' ? 'btn-light' : 'btn-dark' }} btn-sm"
                                 title="Imprimir venta" target="_blank" rel="noopener noreferrer"><i
                                     class="fa-solid fa-duotone fa-print"></i></a>

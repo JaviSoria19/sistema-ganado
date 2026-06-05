@@ -8,7 +8,7 @@
     <div class="card mb-3">
         <div class="card-body">
             <a class="btn {{ session('tema_preferido') == 'dark' ? 'btn-light' : 'btn-dark' }} mb-3"
-                href="{{ route('ventas.imprimir', $venta->idVenta) }}" data-toggle="tooltip" title="Imprimir" target="_blank"
+                href="{{ route('ventas.imprimir', $venta->id_venta) }}" data-toggle="tooltip" title="Imprimir" target="_blank"
                 rel="noopener noreferrer">
                 <i class="fa-duotone fa-solid fa-print"></i> Imprimir
             </a>
