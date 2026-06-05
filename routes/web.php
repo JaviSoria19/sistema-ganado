@@ -79,6 +79,8 @@ Route::controller(EntoreController::class)->group(function () {
 
 Route::controller(BovinoController::class)->group(function () {
     Route::get('bovinos', 'view_index')->name('bovinos.index');
+    //Route::get('bovinos/importar', 'view_importar')->name('bovinos.importar');
+    //Route::post('bovinos/importar', 'create_transaction')->name('bovinos.create-transaction');
     Route::get('bovinos/listar', 'listar')->name('bovinos.listar');
     Route::get('bovinos/{bovino}', 'mostrar')->name('bovinos.mostrar');
     Route::post('bovinos', 'create')->name('bovinos.create');

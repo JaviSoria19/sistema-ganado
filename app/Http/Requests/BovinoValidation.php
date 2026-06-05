@@ -48,6 +48,8 @@ class BovinoValidation extends FormRequest
             'color_actual'                => ['required', 'string', 'max:45'],
             'fecha_nacimiento'            => ['required', 'date', 'before_or_equal:today'],
             'fecha_salida'                => ['nullable', 'date', 'after_or_equal:fecha_nacimiento'],
+            'estado_corporal'             => ['nullable', 'integer', 'min:0', 'max:15'],
+            'seleccion'                   => ['nullable', 'string', 'max:100'],
             'observaciones'               => ['nullable', 'string', 'max:250'],
         ];
     }
@@ -95,6 +97,10 @@ class BovinoValidation extends FormRequest
             'fecha_nacimiento.before_or_equal'   => 'La fecha de nacimiento no puede ser futura.',
             'fecha_salida.date'                  => 'La fecha de salida no tiene un formato válido.',
             'fecha_salida.after_or_equal'        => 'La fecha de salida debe ser posterior o igual a la fecha de nacimiento.',
+            'estado_corporal.integer'           => 'El estado corporal debe ser un número entero.',
+            'estado_corporal.min'               => 'El estado corporal no puede ser negativo.',
+            'estado_corporal.max'               => 'El estado corporal no puede superar 15.',
+            'seleccion.max'                    => 'La selección no puede superar los 100 caracteres.',
             'observaciones.max'                  => 'Las observaciones no pueden superar los 250 caracteres.',
         ];
     }
@@ -123,6 +129,8 @@ class BovinoValidation extends FormRequest
             'color_actual'                => 'color actual',
             'fecha_nacimiento'            => 'fecha de nacimiento',
             'fecha_salida'                => 'fecha de salida',
+            'estado_corporal'             => 'estado corporal',
+            'seleccion'                   => 'selección',
             'observaciones'               => 'observaciones',
         ];
     }

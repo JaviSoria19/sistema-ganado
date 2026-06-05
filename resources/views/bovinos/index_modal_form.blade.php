@@ -1,5 +1,6 @@
 <!-- Modal para crear y editar -->
-<div class="modal fade modal-xl" id="modal-formulario" tabindex="-1" aria-labelledby="modal-formulario-titulo" aria-hidden="true">
+<div class="modal fade modal-xl" id="modal-formulario" tabindex="-1" aria-labelledby="modal-formulario-titulo"
+    aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -87,21 +88,25 @@
                         </div>
                     </div>
 
-                    {{-- Fila 5: Pesos --}}
+                    {{-- Fila 5: Pesos y Fecha de destete --}}
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="peso_nacimiento" class="form-label">Peso nacimiento (kg) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="peso_nacimiento" name="peso_nacimiento"
                                 min="0" max="99.99" step="0.01" placeholder="0.00" required>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="peso_destete" class="form-label">Peso destete (kg) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="peso_destete" name="peso_destete"
                                 min="0" max="999.99" step="0.01" placeholder="0.00" required>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label for="fecha_destete" class="form-label">Fecha de destete</label>
+                            <input type="date" class="form-control" id="fecha_destete" name="fecha_destete">
+                        </div>
+                        <div class="col-md-3 mb-3">
                             <label for="peso_actual" class="form-label">Peso actual (kg) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="peso_actual" name="peso_actual"
@@ -127,7 +132,7 @@
 
                     {{-- Fila 7: Identificadores físicos --}}
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-3 mb-3">
                             <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" role="switch"
                                     id="tiene_identificador_oreja" name="tiene_identificador_oreja" value="1">
@@ -136,7 +141,7 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-3 mb-3">
                             <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" role="switch"
                                     id="tiene_identificador_lomo" name="tiene_identificador_lomo" value="1">
@@ -144,6 +149,16 @@
                                     Tiene identificador de lomo
                                 </label>
                             </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="estado_corporal" class="form-label">Estado corporal</label>
+                            <input type="number" class="form-control" id="estado_corporal" name="estado_corporal"
+                                min="0" max="15" step="1" placeholder="0 - 15" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="seleccion" class="form-label">Selección</label>
+                            <input type="text" class="form-control" id="seleccion" name="seleccion"
+                                maxlength="100" required>
                         </div>
                     </div>
 

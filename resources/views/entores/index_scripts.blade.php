@@ -17,12 +17,16 @@
     function buildSelectOptions(lista, selectedId = null) {
         let html = '<option value="">— Seleccione —</option>';
         lista.forEach(b => {
+            if (b.peso_actual < 300 && b.genero === 'macho') return; // filtrar machos menores a 300kg
+            if (b.peso_actual < 280 && b.genero === 'hembra') return; // filtrar hembras menores a 280kg
+
             const sel = (b.id_bovino == selectedId) ? 'selected' : '';
             const fecha_nacimiento = new Date(b.fecha_nacimiento);
             const carimbo = fecha_nacimiento.getFullYear();
             const potrero = b.potrero ? `P: ${b.potrero.nombre}` : 'Sin potrero';
+            const peso = b.peso_actual ? `(${b.peso_actual}kg)` : '';
             html +=
-                `<option value="${b.id_bovino}" ${sel}>C${carimbo} ${b.identificador} (${b.color_actual}) ${potrero}</option>`;
+                `<option value="${b.id_bovino}" ${sel}>C: ${carimbo} ${b.identificador} ${peso} (${b.color_actual}) ${potrero}</option>`;
         });
         return html;
     }

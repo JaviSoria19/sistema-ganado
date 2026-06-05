@@ -67,4 +67,11 @@ class Entore extends Model
     {
         return Entore::with('macho.potrero', 'machos.potrero', 'hembras.potrero', 'creado', 'modificado', 'eliminado')->findOrFail($id_entore);
     }
+
+    public function get_entores_para_archivar(){
+        $fecha_limite = now()->subDays(270); // 9 meses = 270 días
+        return Entore::where('fecha_inicio', '<=', $fecha_limite)
+            ->where('estado', 'activo')
+            ->get();
+    }
 }

@@ -35,8 +35,10 @@ class BovinoController extends Controller
 
         $bovino = (new Bovino())->get_bovino($bovino);
 
+        $carimbo = date('Y', strtotime($bovino->fecha_nacimiento));
+
         return view('bovinos.details', [
-            'head_title' => 'BOVINO: ' . $bovino->identificador,
+            'head_title' => "BOVINO: C{$carimbo} {$bovino->identificador}" ,
             'bovino' => $bovino,
         ]);
     }
@@ -97,6 +99,8 @@ class BovinoController extends Controller
         $bovino->color_nacimiento         = $request->color_nacimiento;
         $bovino->color_actual             = $request->color_actual;
         $bovino->fecha_nacimiento         = $request->fecha_nacimiento;
+        $bovino->estado_corporal          = $request->estado_corporal;
+        $bovino->seleccion                = $request->seleccion;
         $bovino->observaciones            = $request->observaciones;
         $bovino->creado_por           = session('id_usuario');
 
@@ -157,20 +161,23 @@ class BovinoController extends Controller
             'bovinos.*.origen'                     => ['required', Rule::in(['criollo', 'comprado', 'prestado'])],
             'bovinos.*.identificador'              => ['required', 'string', 'max:25'],
             'bovinos.*.genero'                     => ['required', Rule::in(['macho', 'hembra'])],
-            'bovinos.*.tiene_identificador_oreja'  => ['required', 'boolean'],
-            'bovinos.*.tiene_identificador_lomo'   => ['required', 'boolean'],
+            'bovinos.*.tiene_identificador_oreja'  => ['required', Rule::in([true, false, '1', '0', 1, 0])],
+            'bovinos.*.tiene_identificador_lomo'   => ['required', Rule::in([true, false, '1', '0', 1, 0])],
+            'bovinos.*.fecha_nacimiento'           => ['required', 'date', 'before_or_equal:today'],
             'bovinos.*.peso_nacimiento'            => ['required', 'numeric', 'min:0', 'max:99.99'],
-            'bovinos.*.peso_destete'               => ['required', 'numeric', 'min:0', 'max:999.99'],
+            'bovinos.*.fecha_destete'              => ['nullable', 'date', 'before_or_equal:today'],
+            'bovinos.*.peso_destete'               => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'bovinos.*.peso_actual'                => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'bovinos.*.color_nacimiento'           => ['required', 'string', 'max:45'],
             'bovinos.*.color_actual'               => ['required', 'string', 'max:45'],
-            'bovinos.*.fecha_nacimiento'           => ['required', 'date', 'before_or_equal:today'],
             'bovinos.*.fecha_salida'               => ['nullable', 'date', 'after_or_equal:bovinos.*.fecha_nacimiento'],
+            'bovinos.*.estado_corporal'            => ['nullable', 'integer', 'min:0', 'max:15'],
+            'bovinos.*.seleccion'                  => ['nullable', 'string', 'max:100'],
             'bovinos.*.observaciones'              => ['nullable', 'string', 'max:250'],
         ]);
 
-        // Validación de duplicados: identificador + fecha_nacimiento
-        // Se valida en dos niveles: contra la BD y contra el mismo payload (por si vienen duplicados en la misma petición)
+        /* Validación de duplicados: identificador + fecha_nacimiento, se valida en dos niveles: contra la BD y contra el mismo payload (por si vienen duplicados en la misma petición)*/
+
         $errors = [];
 
         foreach ($request->bovinos as $index => $b) {
@@ -216,12 +223,15 @@ class BovinoController extends Controller
                 $bovino->genero                   = $b['genero'];
                 $bovino->tiene_identificador_oreja = $b['tiene_identificador_oreja'] ? '1' : '0';
                 $bovino->tiene_identificador_lomo  = $b['tiene_identificador_lomo'] ? '1' : '0';
+                $bovino->fecha_nacimiento         = $b['fecha_nacimiento'];
                 $bovino->peso_nacimiento          = $b['peso_nacimiento'];
-                $bovino->peso_destete             = $b['peso_destete'];
+                $bovino->fecha_destete            = $b['fecha_destete'] ?? null;
+                $bovino->peso_destete             = $b['peso_destete'] ?? null;
                 $bovino->peso_actual              = $b['peso_actual'];
                 $bovino->color_nacimiento         = $b['color_nacimiento'];
                 $bovino->color_actual             = $b['color_actual'];
-                $bovino->fecha_nacimiento         = $b['fecha_nacimiento'];
+                $bovino->estado_corporal          = $b['estado_corporal'] ?? null;
+                $bovino->seleccion                = $b['seleccion'] ?? null;
                 $bovino->observaciones            = $b['observaciones'] ?? null;
                 $bovino->creado_por               = session('id_usuario');
                 $bovino->save();
@@ -272,6 +282,8 @@ class BovinoController extends Controller
         $bovino->color_nacimiento         = $request->color_nacimiento;
         $bovino->color_actual             = $request->color_actual;
         $bovino->fecha_nacimiento         = $request->fecha_nacimiento;
+        $bovino->estado_corporal          = $request->estado_corporal;
+        $bovino->seleccion                = $request->seleccion;
         $bovino->observaciones            = $request->observaciones;
         $bovino->modificado_por           = session('id_usuario');
         $bovino->save();

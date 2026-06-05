@@ -1,7 +1,7 @@
 <header class="p-3 mb-3 border-bottom">
     <div class="container">
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start fw-bold">
-            <i class="fa-duotone fa-solid fa-user-alien fa-lg"></i> {{ session('usuario') }}
+            <i class="fa-duotone fa-solid fa-cow"></i>&nbsp;{{ session('usuario') }}
             &nbsp;
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                 <ul class="nav nav-pills">
@@ -47,7 +47,7 @@
                     aria-expanded="false"> <img src="{{ URL::to('/') }}/public/img/user.jpeg" alt="mdo" width="32"
                         height="32" class="rounded-circle"> </a>
                 <ul class="dropdown-menu text-small" style="">
-                    <li><a class="dropdown-item" href="#"><i class="fa-solid fa-duotone fa-alien"></i>
+                    <li><a class="dropdown-item" href="#"><i class="fa-solid fa-duotone fa-cow"></i>
                             {{ session('usuario') }}</a></li>
                     <li>
                         <hr class="dropdown-divider">

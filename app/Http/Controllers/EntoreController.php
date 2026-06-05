@@ -14,8 +14,23 @@ class EntoreController extends Controller
             return redirect()->route('login');
         }
 
+        // Al entrar al index, se deben archivar los entores cuya fecha de inicio sea mayor a 9 meses (270 días) y que aún estén activos
+        $entoresParaArchivar = (new Entore())->get_entores_para_archivar();
+        $entoresInfo = '';
+
+        foreach ($entoresParaArchivar as $e) {
+
+            $e->estado = 'inactivo';
+            $e->fecha_eliminacion = now();
+            $e->eliminado_por = session('id_usuario');
+            $e->save();
+
+            $entoresInfo .= "El entore con fecha de inicio {$e->fecha_inicio} del tipo {$e->tipo_entore} ha sido archivado automáticamente porque su fecha de inicio es mayor a 9 meses.\n";
+        }
+
         return view('entores.index', [
             'head_title' => 'GESTIÓN DE ENTORES',
+            'entoresInfo' => $entoresInfo
         ]);
     }
 

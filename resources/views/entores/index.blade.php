@@ -14,6 +14,12 @@
         <div id="dataTable-export-buttons-container"></div>
     </div>
 
+    @if (isset($entoresInfo) && !empty($entoresInfo))
+        <div class="alert alert-info">
+            {{ $entoresInfo }}
+        </div>
+    @endif
+    
     <table class="table table-bordered table-striped" id="dataTable">
         <thead>
             <tr>

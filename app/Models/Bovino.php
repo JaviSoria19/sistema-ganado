@@ -92,7 +92,7 @@ class Bovino extends Model
 
     public function get_all_bovinos($id_potrero = null, $origen = null, $genero = null, $estado = null)
     {
-        $query = Bovino::with('potrero', 'entore', 'padre', 'madre', 'creado', 'modificado', 'eliminado')->orderBy('fecha_nacimiento', 'ASC');
+        $query = Bovino::with('potrero', 'entore', 'padre', 'madre', 'creado', 'modificado', 'eliminado')->orderBy('fecha_nacimiento', 'DESC');
 
         if ($id_potrero) {
             $query->where('id_potrero', $id_potrero);

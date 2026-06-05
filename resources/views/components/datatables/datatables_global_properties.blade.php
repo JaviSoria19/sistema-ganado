@@ -3,7 +3,7 @@ lengthChange: true,
 autoWidth: true,
 colReorder: true,
 order: [],
-pageLength: 10,
+pageLength: 100,
 dom: 'Blfrtip',
 buttons: [{
         extend: 'copy',

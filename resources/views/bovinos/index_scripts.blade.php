@@ -120,6 +120,13 @@
                     }
                 },
                 {
+                    // Carimbo generado con datatables según el año de nacimiento
+                    data: "fecha_nacimiento",
+                    render: function(data, type, row) {
+                        return data ? new Date(data).getFullYear() : '-';
+                    }
+                },
+                {
                     data: "identificador",
                 },
                 {
@@ -128,26 +135,29 @@
                 {
                     data: "entore",
                     render: function(data, type, row) {
-                        return data ? `${data.fecha_inicio} ${data.tipo_entore}` : null;
+                        return data ? `${data.fecha_inicio} ${data.tipo_entore}` : '-';
                     }
                 },
                 {
-                    data: "padre.identificador",
+                    data: "padre",
+                    render: function(data, type, row) {
+                        const carimbo = data && data.fecha_nacimiento ?
+                            `C${new Date(data.fecha_nacimiento).getFullYear()}` : '';
+                        return data ? `${carimbo} ${data.identificador}` : '-';
+                    }
                 },
                 {
-                    data: "madre.identificador",
+                    data: "madre",
+                    render: function(data, type, row) {
+                        const carimbo = data && data.fecha_nacimiento ?
+                            `C${new Date(data.fecha_nacimiento).getFullYear()}` : '';
+                        return data ? `${carimbo} ${data.identificador}` : '-';
+                    }
                 },
                 {
                     data: "origen",
                     render: function(data, type, row) {
                         return data.charAt(0).toUpperCase() + data.slice(1);
-                    }
-                },
-                {
-                    // Carimbo generado con datatables según el año de nacimiento
-                    data: "fecha_nacimiento",
-                    render: function(data, type, row) {
-                        return data ? new Date(data).getFullYear() : '-';
                     }
                 },
                 {
@@ -242,7 +252,16 @@
                     }
                 },
                 {
+                    data: "fecha_nacimiento",
+                },
+                {
                     data: "peso_nacimiento",
+                },
+                {
+                    data: "fecha_destete",
+                    render: function(data, type, row) {
+                        return data || '-';
+                    }
                 },
                 {
                     data: "peso_destete",
@@ -330,25 +349,21 @@
                     data: "color_actual",
                 },
                 {
-                    data: "fecha_nacimiento",
+                    data: "estado_corporal",
                 },
                 {
-                    // Factible para la venta (se trabajará después)
-                    data: null,
+                    data: "seleccion",
+                },
+                {
+                    data: "observaciones",
                     render: function(data, type, row) {
-                        return '-';
+                        return data || '-';
                     }
                 },
                 {
                     data: "fecha_salida",
                     render: function(data, type, row) {
                         return data ? new Date(data).toLocaleDateString() : '-';
-                    }
-                },
-                {
-                    data: "observaciones",
-                    render: function(data, type, row) {
-                        return data || '-';
                     }
                 },
                 {
@@ -438,7 +453,7 @@
             scrollX: true,
             colReorder: true,
             order: [],
-            pageLength: 10,
+            pageLength: 100,
             dom: 'Blfrtip',
             buttons: [{
                     extend: 'copy',
@@ -485,6 +500,8 @@
             $('#form-crear-o-editar input[name="color_actual"]').val('');
             $('#form-crear-o-editar input[name="tiene_identificador_oreja"]').prop('checked', false);
             $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked', false);
+            $('#form-crear-o-editar input[name="estado_corporal"]').val('');
+            $('#form-crear-o-editar input[name="seleccion"]').val('');
             $('#form-crear-o-editar textarea[name="observaciones"]').val('');
 
             const titleElement = document.getElementById('modal-formulario-titulo');
@@ -527,6 +544,8 @@
                     'checked', !!data.tiene_identificador_oreja);
                 $('#form-crear-o-editar input[name="tiene_identificador_lomo"]').prop('checked',
                     !!data.tiene_identificador_lomo);
+                $('#form-crear-o-editar input[name="estado_corporal"]').val(data.estado_corporal);
+                $('#form-crear-o-editar input[name="seleccion"]').val(data.seleccion);
                 $('#form-crear-o-editar textarea[name="observaciones"]').val(data
                     .observaciones);
 

@@ -31,18 +31,20 @@
             <tr>
                 <!-- Los campos generados que están comentados abajo son aquellos que se calculan dinámicamente en el frontend en base a los datos de entrada -->
                 <th>#</th>
+                <th>Carimbo</th> <!-- Generado con datatables según el año de nacimiento ✅ -->
                 <th>Identificador</th>
                 <th>Potrero</th>
                 <th>Entore</th>
                 <th>Padre</th>
                 <th>Madre</th>
                 <th>Origen</th>
-                <th>Carimbo</th> <!-- Generado con datatables según el año de nacimiento ✅ -->
                 <th>Género</th>
-                <th>Categoría</th> <!-- Generado con datatables según género y edad -->
+                <th>Categoría</th> <!-- Generado con datatables según género y edad ✅ -->
                 <th>Tiene identificador (oreja)</th>
                 <th>Tiene identificador (lomo)</th>
+                <th>Fecha de nacimiento</th>
                 <th>Peso de nacimiento (kg)</th>
+                <th>Fecha de destete</th>
                 <th>Peso al destete (kg)</th>
                 <th>Peso actual (kg)</th>
                 <th>Peso de nacimiento (ua)</th> <!-- Generado con datatables en base a su contraparte en kg ✅-->
@@ -52,10 +54,10 @@
                 <th>Ganancia diaria de peso</th>
                 <th>Color de nacimiento</th>
                 <th>Color actual</th>
-                <th>Fecha de nacimiento</th>
-                <th>Factible para venta</th> <!-- Generado con datatables según género y edad -->
-                <th>Fecha de salida</th>
+                <th>Estado corporal</th>
+                <th>Selección</th>
                 <th>Observaciones</th>
+                <th>Fecha de salida</th>
 
                 <th>Estado</th>
                 <th>F. Registro</th>
