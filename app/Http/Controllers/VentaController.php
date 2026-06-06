@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Venta;
 use App\Models\Pago;
 use App\Models\Bovino;
+use App\Models\Cliente;
+use App\Models\Usuario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -17,9 +19,14 @@ class VentaController extends Controller
         if (!session('tiene_acceso')) {
             return redirect()->route('login');
         }
-        
+
+        $usuarios = (new Usuario())->get_all_usuarios();
+        $clientes = (new Cliente())->get_all_clientes();
+
         return view('ventas.index', [
             'head_title' => 'GESTIÓN DE VENTAS',
+            'usuarios' => $usuarios,
+            'clientes' => $clientes,
         ]);
     }
 
@@ -78,7 +85,7 @@ class VentaController extends Controller
             'creado_por' => $request->creado_por ?? null,
             'id_cliente' => $request->id_cliente ?? null,
         ];
-        
+
         $ventas = (new Venta())->get_all_ventas($filters);
 
         return response()->json([
@@ -289,7 +296,7 @@ class VentaController extends Controller
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
         }
 
-        if($request->motivo_eliminacion == null || $request->motivo_eliminacion == ''){
+        if ($request->motivo_eliminacion == null || $request->motivo_eliminacion == '') {
             return response()->json([
                 'success' => false,
                 'message' => 'Debe proporcionar un motivo de eliminación para continuar'
@@ -297,8 +304,16 @@ class VentaController extends Controller
         }
 
         $venta = (new Venta())->get_venta($request->id_venta);
+
+        if ($venta->estado == 'eliminado') {
+            return response()->json([
+                'success' => false,
+                'message' => 'La venta ya se encuentra eliminada'
+            ], 400);
+        }
+
         $venta->motivo_eliminacion = $request->motivo_eliminacion;
-        $venta->estado = 'inactivo';
+        $venta->estado = 'eliminado';
         $venta->fecha_eliminacion = now();
         $venta->eliminado_por = session('id_usuario');
         $venta->save();

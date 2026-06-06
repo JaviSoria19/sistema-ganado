@@ -3,7 +3,7 @@
         $("#dataTable").DataTable({
             processing: true,
             ajax: {
-                url: "{{ route('usuarios.listar') }}", // Ruta de Laravel
+                url: "{{ route('clientes.listar') }}", // Ruta de Laravel
                 type: "GET",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -19,25 +19,18 @@
                     }
                 },
                 {
-                    data: "usuario",
+                    data: "nombre",
                 },
                 {
-                    data: "tema_preferido",
-                    render: function(data, type, row) {
-                        switch (data) {
-                            case 'dark':
-                                return 'Oscuro';
-                            case 'light':
-                                return 'Claro';
-                            default:
-                                return data;
-                        }
-                    }
+                    data: "celular",
+                },
+                {
+                    data: "estancia",
                 },
                 {
                     data: "estado",
                     render: function(data, type, row) {
-                        if (data == "activo") {
+                        if (data == 'activo') {
                             return '<span class="badge bg-success">Activo</span>';
                         } else {
                             return '<span class="badge bg-danger">Inactivo</span>';
@@ -88,13 +81,13 @@
                         return `
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-warning btn-sm btn-editar" 
-                                data-id="${row.id_usuario}" data-toggle="tooltip" title="Editar">
+                                data-id="${row.id_cliente}" data-toggle="tooltip" title="Editar">
                             <i class="fa-duotone fa-solid fa-edit"></i>
                         </button>
-                        <button type="button" class="btn btn-${row.estado == "activo" ? 'danger' : 'success'} btn-sm btn-cambiar-estado" 
-                                data-id="${row.id_usuario}" data-estado="${row.estado}" data-nombre="${row.usuario}" 
-                                data-toggle="tooltip" title="${row.estado == "activo" ? 'Deshabilitar' : 'Habilitar'}">
-                            <i class="fa-duotone fa-solid fa-toggle-${row.estado == "activo" ? 'off' : 'on'}"></i>
+                        <button type="button" class="btn btn-${row.estado == 'activo' ? 'danger' : 'success'} btn-sm btn-cambiar-estado" 
+                                data-id="${row.id_cliente}" data-estado="${row.estado}" data-nombre="${row.nombre}" 
+                                data-toggle="tooltip" title="${row.estado == 'activo' ? 'Deshabilitar' : 'Habilitar'}">
+                            <i class="fa-duotone fa-solid fa-toggle-${row.estado == 'activo' ? 'off' : 'on'}"></i>
                         </button>
                     </div>
                 `;
@@ -108,16 +101,13 @@
 
 
         $(document).on('click', '.btn-crear', function() {
-            const id = 0;
-            $('#form-crear-o-editar input[name="id_usuario"]').val(0);
-            $('#form-crear-o-editar input[name="usuario"]').val('');
-            $('#form-crear-o-editar select[name="tema_preferido"]').val('light')
-                .trigger('change');
-            $('#form-crear-o-editar input[name="contrasenha"]').val('');
-            $('#form-crear-o-editar input[name="recontrasenha"]').val('');
+            $('#form-crear-o-editar input[name="id_cliente"]').val(0);
+            $('#form-crear-o-editar input[name="nombre"]').val('');
+            $('#form-crear-o-editar input[name="celular"]').val('');
+            $('#form-crear-o-editar input[name="estancia"]').val('');
 
             const titleElement = document.getElementById('modalCreateOrEdit_Title');
-            titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR USUARIO';
+            titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR CLIENTE';
             $('#modalCreateOrEdit').modal('show');
         });
 
@@ -126,32 +116,28 @@
         $(document).on('click', '.btn-editar', function() {
             const id = $(this).data('id');
 
-            $.get("{{ route('usuarios.index') . '/' }}" + id, function(usuario) {
-                $('#form-crear-o-editar input[name="id_usuario"]').val(usuario.data.id_usuario);
-                $('#form-crear-o-editar input[name="usuario"]').val(usuario.data
-                    .usuario);
-                $('#form-crear-o-editar select[name="tema_preferido"]').val(usuario.data
-                        .tema_preferido)
-                    .trigger('change');
-                $('#form-crear-o-editar input[name="contrasenha"]').val(''); // opcional, vacío
-                $('#form-crear-o-editar input[name="recontrasenha"]').val('');
+            $.get("{{ route('clientes.index') . '/' }}" + id, function(cliente) {
+                $('#form-crear-o-editar input[name="id_cliente"]').val(cliente.data.id_cliente);
+                $('#form-crear-o-editar input[name="nombre"]').val(cliente.data.nombre);
+                $('#form-crear-o-editar input[name="celular"]').val(cliente.data.celular);
+                $('#form-crear-o-editar input[name="estancia"]').val(cliente.data.estancia);
 
                 const titleElement = document.getElementById('modalCreateOrEdit_Title');
                 titleElement.innerHTML =
-                    '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR USUARIO';
+                    '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR CLIENTE';
                 $('#modalCreateOrEdit').modal('show');
             });
         });
 
 
         $(document).on('click', '#btnGuardar', function() {
-            const id_usuario = $('#form-crear-o-editar input[name="id_usuario"]').val();
-            const url = id_usuario == 0 ?
-                "{{ route('usuarios.create') }}" // POST -> crear
+            const id_cliente = $('#form-crear-o-editar input[name="id_cliente"]').val();
+            const url = id_cliente == 0 ?
+                "{{ route('clientes.create') }}" // POST -> crear
                 :
-                "{{ route('usuarios.index') . '/' }}" + id_usuario; // PUT -> actualizar
+                "{{ route('clientes.index') . '/' }}" + id_cliente; // PUT -> actualizar
 
-            const type = id_usuario == 0 ? 'POST' : 'PUT';
+            const type = id_cliente == 0 ? 'POST' : 'PUT';
 
             $.ajax({
                 url: url,
@@ -170,18 +156,38 @@
                     }
                 },
                 error: function(xhr) {
-                    const erroresConcatenados = Object.values(JSON.parse(xhr.responseText)
-                            .errors)
-                        .flatMap(errores => errores)
-                        .join('<br>');
+                    let respuesta = {};
+                    try {
+                        respuesta = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        respuesta = {
+                            message: "Error desconocido"
+                        };
+                    }
 
-                    Swal.fire('Error', 'Ocurrió un error al intentar la acción: <br>' +
-                        erroresConcatenados, 'error');
+                    let htmlError = "";
+
+                    if (respuesta.errors) {
+                        // Errores de validación (422)
+                        htmlError = Object.values(respuesta.errors)
+                            .flat()
+                            .join("<br>");
+                    } else if (respuesta.message) {
+                        // Errores manuales (400, 403, 500...)
+                        htmlError = respuesta.message;
+                    } else {
+                        htmlError = "Ocurrió un error inesperado.";
+                    }
+                    Swal.fire({
+                        theme: localStorage.getItem('theme') || 'dark',
+                        title: 'Error',
+                        html: 'Ocurrió un error al intentar la acción: <br>' +
+                            htmlError,
+                        icon: 'error'
+                    });
                 }
             });
         });
-
-
 
         $(document).on('click', '.btn-cambiar-estado', function() {
             const id = $(this).data('id');
@@ -192,7 +198,7 @@
 
             Swal.fire({
                 title: `¡ATENCIÓN!`,
-                html: `¿Estás seguro de <b>${accion}</b> el usuario <b class="text-primary">${nombre}</b>?`,
+                html: `¿Estás seguro de <b>${accion}</b> el/la cliente <b class="text-primary">${nombre}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -202,36 +208,26 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: "{{ route('usuarios.index') . '/' }}" + id,
+                        url: "{{ route('clientes.index') . '/' }}" + id,
                         type: "PATCH",
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         data: {
-                            id_usuario: id
+                            id_cliente: id
                         },
                         success: function(response) {
                             Swal.fire('Actualizado', response.message, 'success');
                             $('#dataTable').DataTable().ajax.reload();
                         },
-                        error: function() {
-                            Swal.fire('Error', `No se pudo ${accion} el usuario`,
+                        error: function(xhr) {
+                            console.error(xhr.responseText);
+                            Swal.fire('Error', `No se pudo ${accion} el/la cliente`,
                                 'error');
                         }
                     });
 
                 }
-            });
-        });
-    });
-
-    $(document).ready(function() {
-        document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const input = document.getElementById(this.dataset.target);
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                this.querySelector('i').classList.toggle('fa-eye-slash');
             });
         });
     });

@@ -33,7 +33,7 @@ class Cliente extends Model
 
     public function get_all_clientes()
     {
-        return Cliente::with('creado', 'modificado', 'eliminado')->orderBy('id_cliente', 'ASC')->get();
+        return Cliente::with('creado', 'modificado', 'eliminado')->orderBy('nombre', 'ASC')->get();
     }
 
     public function get_cliente($id_cliente)

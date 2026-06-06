@@ -57,13 +57,6 @@
             }
         </style>
         <img src="{{ public_path('img/logo_venta.jpg') }}" class="watermark">
-
-        {{-- <p
-            class="font-weight-bold bg-{{ $venta->estado == '0' ? 'danger' : 'info' }} text-white m-2 text-center rounded align-middle">
-            VENTA N° {{ $venta?->id_venta }}
-            {{ $venta->estado == '0' ? '(ELIMINADA EL ' . date('d/m/Y H:i:s', strtotime($venta?->fechaEliminacion)) . ')' : '' }}
-        </p> --}}
-
         <div class="table-container border border-info rounded p-2 m-2">
             <table class="table table-bordered">
                 <tr class="font-weight-bold bg-secondary text-light">

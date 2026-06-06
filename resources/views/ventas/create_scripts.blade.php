@@ -1,699 +1,547 @@
 <script>
-    $(document).ready(function() {
-        const paramPorcentajeLimiteDescuento = "{{ $parametro?->paramPorcentajeLimiteDescuento }}";
+    /* ═══════════════════════════════════════════════════════
+       ESTADO GLOBAL
+    ═══════════════════════════════════════════════════════ */
+    const STATE = {
+        bovinos: [], // filas en la tabla de venta
+        pagos: [], // { tipo_pago, monto, fecha_pago }
+        clientes: [],
+        listaBovinosActivos: [], // todos los bovinos activos cargados una vez
+        clienteSeleccionado: null,
+    };
 
-        $('#empleado').select2({
-            language: "es",
-            dropdownCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
-            selectionCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+    const TIPOS_PAGO = ['Efectivo', 'Depósito bancario', 'Transferencia QR', 'Cheque', 'Otro'];
+
+    /* ═══════════════════════════════════════════════════════
+       HELPERS
+    ═══════════════════════════════════════════════════════ */
+    const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const fmt = n => 'Bs. ' + parseFloat(n || 0).toFixed(2);
+    const fmtNum = n => parseFloat(n || 0).toFixed(2);
+
+    function showAlert(msg, type = 'info') {
+        const iconMap = {
+            danger: 'error',
+            success: 'success',
+            warning: 'warning',
+            info: 'info'
+        };
+        const icon = iconMap[type] || 'info';
+        Swal.fire({
+            theme: localStorage.getItem('theme') || 'dark',
+            icon,
+            html: msg,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 6000,
+            timerProgressBar: true,
+            customClass: {
+                popup: 'shadow-sm'
+            }
         });
+    }
 
-        $('#cliente').select2({
-            language: "es",
-            dropdownCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
-            selectionCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+    /* ═══════════════════════════════════════════════════════
+       CARGA DE BOVINOS
+    ═══════════════════════════════════════════════════════ */
+    function buildBovinoOptions(lista, selectedId = null) {
+        let html = '<option value="">— Seleccione —</option>';
+        lista.forEach(b => {
+            const sel = (b.id_bovino == selectedId) ? 'selected' : '';
+            const carimbo = new Date(b.fecha_nacimiento).getFullYear();
+            const potrero = b.potrero ? `P: ${b.potrero.nombre}` : 'Sin potrero';
+            const peso = b.peso_actual ? `(${b.peso_actual}kg)` : '';
+            html +=
+                `<option value="${b.id_bovino}" ${sel}>C: ${carimbo} ${b.identificador} ${peso} (${b.color_actual}) ${potrero}</option>`;
         });
+        return html;
+    }
 
-        function recargarClientesSelect(idSeleccionado = null) {
-            $.ajax({
-                url: "{{ route('clientes.listar') }}",
-                type: "GET",
-                dataType: "json",
-                success: function(response) {
-                    let $select = $("#cliente");
-                    $select.empty();
-                    $select.append('<option value="">-- Seleccione un cliente --</option>');
-
-                    $.each(response.data, function(i, cliente) {
-                        if (cliente.estado == '0') return; // Omitir clientes inactivos
-
-                        $select.append(
-                            `<option value="${cliente.id_cliente}">
-                        ${cliente.nombreCliente} - CI: ${cliente.cedulaIdentidad} - Cel: ${cliente.celular} - Procedencia: ${cliente.procedencia}
-                    </option>`
-                        );
-                    });
-
-                    // Si se pasó un cliente recién creado, seleccionarlo
-                    if (idSeleccionado) {
-                        $select.val(idSeleccionado).trigger('change');
-                    } else {
-                        $select.trigger('change.select2');
-                    }
-                }
-            });
+    async function cargarBovinos() {
+        try {
+            const r = await fetch("{{ route('bovinos.listar') }}?estado=activo");
+            const data = await r.json();
+            STATE.listaBovinosActivos = data.data ?? [];
+            actualizarSelectBovino();
+        } catch (e) {
+            console.error('Error cargando bovinos', e);
         }
+    }
 
-        recargarClientesSelect();
+    function actualizarSelectBovino() {
+        const idsEnTabla = STATE.bovinos.map(b => b.id_bovino);
+        const disponibles = STATE.listaBovinosActivos.filter(b => !idsEnTabla.includes(b.id_bovino));
+        document.getElementById('select-bovino').innerHTML = buildBovinoOptions(disponibles);
+    }
 
-        $(document).on('click', '.btn-crear', function() {
-            $('#formCreateOrEdit input[name="id_cliente"]').val(0);
-            $('#formCreateOrEdit input[name="nombreCliente"]').val('');
-            $('#formCreateOrEdit input[name="celular"]').val('');
-            $('#formCreateOrEdit input[name="cedulaIdentidad"]').val('');
-            $('#formCreateOrEdit input[name="procedencia"]').val('');
-
-            const titleElement = document.getElementById('modalCreateOrEdit_Title');
-            titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR CLIENTE';
-            $('#modalCreateOrEdit').modal('show');
-        });
-
-
-
-        $(document).on('click', '.btn-editar', function() {
-            const id = $('#cliente').val();
-            if (!id) {
-                Swal.fire({
-                    theme: 'auto',
-                    title: "¡Espera!",
-                    text: "Selecciona un cliente para editar su información.",
-                    icon: "warning"
-                });
-                return;
+    /* ═══════════════════════════════════════════════════════
+       CARGA DE CLIENTES
+    ═══════════════════════════════════════════════════════ */
+    async function cargarClientes(seleccionarId = null) {
+        try {
+            const r = await fetch("{{ route('clientes.listar') }}");
+            const data = await r.json();
+            STATE.clientes = data.data ?? [];
+            const sel = document.getElementById('select-cliente');
+            const valorActual = seleccionarId ?? sel.value;
+            sel.innerHTML = '<option value="">— Elige un cliente —</option>';
+            STATE.clientes.filter(c => c.estado === 'activo').forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id_cliente;
+                opt.textContent = c.nombre;
+                sel.appendChild(opt);
+            });
+            if (valorActual) {
+                sel.value = valorActual;
+                sel.dispatchEvent(new Event('change'));
             }
-
-            $.get("{{ route('clientes.index') . '/' }}" + id, function(cliente) {
-                $('#formCreateOrEdit input[name="id_cliente"]').val(cliente.data.id_cliente);
-                $('#formCreateOrEdit input[name="nombreCliente"]').val(cliente.data
-                    .nombreCliente);
-                $('#formCreateOrEdit input[name="celular"]').val(cliente.data.celular);
-                $('#formCreateOrEdit input[name="cedulaIdentidad"]').val(cliente.data
-                    .cedulaIdentidad);
-                $('#formCreateOrEdit input[name="procedencia"]').val(cliente.data.procedencia);
-
-                const titleElement = document.getElementById('modalCreateOrEdit_Title');
-                titleElement.innerHTML =
-                    '<i class="fa-solid fa-duotone fa-edit"></i> EDITAR CLIENTE';
-                $('#modalCreateOrEdit').modal('show');
-            });
-        });
-
-        $(document).on('click', '#btnGuardar', function() {
-            const id_cliente = $('#formCreateOrEdit input[name="id_cliente"]').val();
-            const url = id_cliente == 0 ?
-                "{{ route('clientes.create') }}" // POST -> crear
-                :
-                "{{ route('clientes.index') . '/' }}" + id_cliente; // PUT -> actualizar
-
-            const type = id_cliente == 0 ? 'POST' : 'PUT';
-
-            $.ajax({
-                url: url,
-                type: type,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                data: $('#formCreateOrEdit').serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire('Éxito', response.message, 'success');
-                        $('#modalCreateOrEdit').modal('hide');
-                        recargarClientesSelect(response.cliente.id_cliente);
-                    } else {
-                        Swal.fire('Error', response.message, 'error');
-                    }
-                },
-                error: function(xhr) {
-                    //console.error(xhr.responseText);
-                    //console.error(JSON.parse(xhr.responseText));
-
-                    const erroresConcatenados = Object.values(JSON.parse(xhr.responseText)
-                            .errors)
-                        .flatMap(errores => errores)
-                        .join('<br>');
-
-                    Swal.fire('Error', 'Ocurrió un error al intentar la acción: <br>' +
-                        erroresConcatenados, 'error');
-                }
-            });
-        });
-
-        function actualizarTotalPagosSaldo() {
-            let totalUSD = 0;
-            let totalPagoUSD = 0;
-            let saldoUSD = 0;
-
-            $("#productos tbody tr").each(function() {
-                let precioUSD = parseFloat($(this).find('.precioUSD').text());
-                if (isNaN(precioUSD)) precioUSD = 0;
-                totalUSD += precioUSD;
-            });
-
-            $("#pagos tbody tr").each(function() {
-                let pagoUSD = parseFloat($(this).find(".pagoUSD").text());
-                if (isNaN(pagoUSD)) pagoUSD = 0;
-                totalPagoUSD += pagoUSD;
-            });
-
-            saldoUSD = totalUSD - totalPagoUSD;
-
-            $("#totalUSD").text(totalUSD.toFixed(2));
-            $("#totalPagoUSD").text(totalPagoUSD.toFixed(2));
-            $("#saldoUSD").text(saldoUSD.toFixed(2));
+        } catch (e) {
+            console.error('Error cargando clientes', e);
         }
+    }
 
-        // Inicio de métodos para los productos
-        function buscarProducto() {
-            const codigoProducto = ($('#codigoProducto').val()).trim();
-            let existe = false;
-
-            if (codigoProducto.length < 4 || codigoProducto === "") {
-                Swal.fire({
-                    theme: 'auto',
-                    icon: "warning",
-                    title: "",
-                    text: `¡Ingresa un código o identificador de producto!`,
-                    showConfirmButton: false,
-                    timer: 1000
-                });
-                $('#codigoProducto').val('');
-                return;
-            }
-
-            $("#productos tbody tr").each(function() {
-                let codigoFila = $(this).find('.codigoProducto').text();
-                let identificadorFila = $(this).find('.identificador').text();
-                if (codigoFila == codigoProducto || identificadorFila == codigoProducto) {
-                    existe = true;
-                }
-            });
-
-            if (existe) {
-                Swal.fire({
-                    theme: 'auto',
-                    icon: "info",
-                    title: "",
-                    html: `¡El producto con el código o identificador <b class="text-primary">${codigoProducto}</b> ya se encuentra en la lista!`,
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-
-                $('#codigoProducto').val('');
-
-                return;
-            }
-            $.get("{{ route('productos.index') . '/' }}" + codigoProducto + "/codigo", function(producto) {
-                if (producto.data == null) {
-                    Swal.fire({
-                        theme: 'auto',
-                        icon: "error",
-                        title: "",
-                        text: `¡No se encontró el producto con el código ${codigoProducto}!`,
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                    return;
-                } else {
-                    if (producto.data.estado == 2 || producto.data.estado == 0) {
-                        let estado = producto.data.estado == 2 ? 'vendido' : 'eliminado';
-                        Swal.fire({
-                            theme: 'auto',
-                            icon: "error",
-                            title: "",
-                            text: `¡El producto con el código ${codigoProducto} fue ${estado} y no está disponible para su venta!`,
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                        return;
-                    }
-
-                    let costoFinalUSD = parseFloat(producto.data.costoBaseUSD) + parseFloat(producto
-                        .data.costoBaseUSD * producto.data.traspasoPorcentaje / 100) + parseFloat(
-                        producto.data.transporteUSD);
-                    let fila = `
-                        <tr>
-                            <td class="visually-hidden idProducto">${producto.data.idProducto}</td>
-                            <td class="codigoProducto">${producto.data.codigoProducto}</td>
-                            <td class="identificador">${producto.data.identificador}</td>
-                            <td class="nombreProducto">${producto.data.marca.nombreMarca} ${producto.data.nombreProducto} ${producto.data.color}</td>
-                            <td class="costoFinalUSD">${costoFinalUSD.toFixed(2)}</td>
-                            <td class="precioUSD" contenteditable="true">${producto.data.precioVentaUSD}</td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm btn-remover" 
-                                    data-toggle="tooltip" title="Remover de la tabla" data-producto="${producto.data.codigoProducto} ${producto.data.marca.nombreMarca} ${producto.data.nombreProducto}">
-                                    <i class="fa-solid fa-duotone fa-trash-can-list"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    $("#productos tbody").append(fila);
-                    actualizarTotalPagosSaldo();
-                    actualizarResumen();
-
-                    Swal.fire({
-                        position: "top-end",
-                        title: `Producto con identificador ingresado:<br><b class="text-success">${producto.data.identificador}</b>`,
-                        showConfirmButton: false,
-                        timer: 1500,
-                        timerProgressBar: true,
-                    });
-                }
-            });
-
-            $('#codigoProducto').val('');
-        }
-
-        $(".btn-buscar").on("click", function() {
-            buscarProducto();
-        });
-
-        $("#codigoProducto").on("keypress", function(e) {
-            if (e.which === 13) { // Enter
-                e.preventDefault();
-                buscarProducto();
-            }
-        });
-
-        $("#productos").on("click", ".btn-remover", function() {
-            Swal.fire({
-                theme: "auto",
-                title: "Confirmación",
-                text: "¿Estás seguro de remover este producto?",
-                icon: "info",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Si, remover producto",
-                cancelButtonText: "No, cancelar"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $(this).closest("tr").remove();
-                    actualizarTotalPagosSaldo();
-                    actualizarResumen();
-                    Swal.fire({
-                        theme: 'auto',
-                        icon: "success",
-                        title: "",
-                        text: `¡Hecho!`,
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                }
-            });
-        });
-
-        // Validación del detalle si está vacío al perder el foco
-        $("#productos").on("blur", ".precioUSD", function() {
-            let valor = $(this).text().trim();
-
-            // Obtener el costoFinalUSD de la FILA ACTUAL
-            let costoFinal = $(this).closest('tr').find('.costoFinalUSD').text();
-            let precioMinimo = Math.round(parseFloat(costoFinal) / 100 * (100 -
-                paramPorcentajeLimiteDescuento), 2);
-
-            // Validar que sea numérico, no esté vació o no sea menor al precio minimo
-            if (isNaN(valor) || valor.trim() === "" || valor < precioMinimo) {
-                Swal.fire({
-                    theme: 'auto',
-                    icon: "error",
-                    title: "",
-                    text: `¡El valor ingresado no es un número, está vacío o es inferior al precio mínimo!`,
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                $(this).text(Math.round(precioMinimo));
-            }
-
-            actualizarTotalPagosSaldo();
-        });
-        // Fin de métodos para los pagos
-
-        // Inicio de métodos para los pagos
-        function agregarPago() {
-            let pagoUSD = parseFloat($("#pagoUSD").val());
-
-            if (pagoUSD > 0) {
-                let fila = `
-                <tr>
-                    <td class="pagoUSD" contenteditable="true">${pagoUSD.toFixed(2)}</td>
-                    <td class="fechaPago">
-                        <input type="date" class="form-control fechaPagoInput" 
-                            value="${new Date().toISOString().split('T')[0]}">
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-danger btn-sm btn-remover" 
-                            data-toggle="tooltip" title="Remover de la tabla">
-                            <i class="fa-solid fa-duotone fa-trash-can-list"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-                $("#pagos tbody").append(fila);
-                actualizarTotalPagosSaldo();
-
-                $("#pagoUSD").val("");
-                $("#pagoUSD").focus();
-            }
-        }
-
-        $(".btn-agregar-pago").on("click", function() {
-            agregarPago();
-        });
-
-        $("#pagoUSD").on("keypress", function(e) {
-            if (e.which === 13) { // Enter
-                e.preventDefault();
-                agregarPago();
-            }
-        });
-
-        $("#pagos").on("click", ".btn-remover", function() {
-            Swal.fire({
-                theme: "auto",
-                title: "Confirmación",
-                text: "¿Estás seguro de remover este pago?",
-                icon: "info",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Si, remover pago",
-                cancelButtonText: "No, cancelar"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $(this).closest("tr").remove();
-                    actualizarTotalPagosSaldo();
-                    Swal.fire({
-                        theme: 'auto',
-                        icon: "success",
-                        title: "",
-                        text: `¡Hecho!`,
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                }
-            });
-        });
-
-        // Detectar cambios en precio o cantidad (cuando usuario edita)
-        $("#pagos").on("input", ".pagoUSD", function() {
-            let valor = $(this).text();
-
-            // Validar que sea numérico
-            if (isNaN(valor) || valor.trim() === "") {
-                $(this).text("0");
-            }
-
-            actualizarTotalPagosSaldo();
-        });
-
-        // Fin de métodos para los pagos
-
-        $("#btnCrearVenta").on("click", function() {
-
-            const idEmpleado = $('#empleado').val();
-            const id_cliente = $('#cliente').val();
-            let productos = [];
-            let pagos = [];
-
-            $("#productos tbody tr").each(function() {
-                let fila = $(this);
-                let idProducto = fila.find('.idProducto').text().trim();
-                let precioUSD = parseFloat(fila.find('.precioUSD').text());
-                productos.push({
-                    idProducto: idProducto,
-                    precioUSD: precioUSD,
-                });
-            });
-
-            $("#pagos tbody tr").each(function() {
-                let pagoUSD = parseFloat($(this).find('.pagoUSD').text());
-                let fechaPago = $(this).find('.fechaPagoInput').val();
-                pagos.push({
-                    pagoUSD: pagoUSD,
-                    fechaPago: fechaPago,
-                });
-            });
-
-            if (!idEmpleado) {
-                Swal.fire({
-                    theme: "auto",
-                    title: "¡No válido!",
-                    html: "Selecciona el <b>empleado</b> que está realizando la venta",
-                    icon: "info"
-                });
-                return;
-            }
-
-            if (!id_cliente) {
-                Swal.fire({
-                    theme: "auto",
-                    title: "¡No válido!",
-                    html: "Selecciona un <b>cliente</b> para registrar la venta",
-                    icon: "info"
-                });
-                return;
-            }
-
-            if (productos.length === 0) {
-                Swal.fire({
-                    theme: "auto",
-                    title: "¡No válido!",
-                    html: "¡Ingresa al menos un producto a la lista!",
-                    icon: "warning"
-                });
-                return;
-            }
-
-            if (pagos.length === 0 || (pagos.length === 1 && pagos[0].pagoUSD === 0)) {
-                Swal.fire({
-                    theme: "auto",
-                    title: "¿Estás seguro?",
-                    text: "No agregaste ningún pago, ¿deseas continuar?",
-                    icon: "question",
-                    showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Si, registrar la venta",
-                    cancelButtonText: "No, cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos);
-                    }
-                });
-            } else {
-                Swal.fire({
-                    theme: "auto",
-                    title: "Confirmación",
-                    text: "¿Estás seguro de haber llenado la información correctamente?",
-                    icon: "info",
-                    showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Si, registrar la venta",
-                    cancelButtonText: "No, cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos);
-                    }
-                });
-            }
-        });
-
-        function registrarVentaAJAX(idEmpleado, id_cliente, productos, pagos) {
-            const btnCrearVenta = document.getElementById('btnCrearVenta');
-            const _totalUSD = document.getElementById('totalUSD');
-            const _value_totalUSD = parseFloat(_totalUSD.textContent);
-            const _saldoUSD = document.getElementById('saldoUSD');
-            const _value_saldoUSD = parseFloat(_saldoUSD.textContent);
-            btnCrearVenta.disabled = true;
-            btnCrearVenta.innerHTML = '<i class="fa-duotone fa-solid fa-loader fa-spin"></i> Guardando...';
-
-
-            /*console.log('idEmpleado');
-            console.log(idEmpleado);
-            console.log('id_cliente');
-            console.log(id_cliente);
-            console.log('_value_totalUSD');
-            console.log(_value_totalUSD);
-            console.log('_value_saldoUSD');
-            console.log(_value_saldoUSD);
-            console.log('productos');
-            console.log(productos);
-            console.log('pagos');
-            console.log(pagos);
-            return;*/
-
-            $.ajax({
-                url: "{{ route('ventas.create') }}",
-                type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                data: {
-                    id_usuario: '{{ session('id_usuario') }}',
-                    id_cliente: id_cliente,
-                    idEmpleado: idEmpleado,
-                    totalUSD: _value_totalUSD,
-                    saldoUSD: _value_saldoUSD,
-                    productos: productos,
-                    pagos: pagos
-                },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire('Éxito', response.message, 'success');
-                        btnCrearVenta.innerHTML =
-                            '<i class="fa-solid fa-duotone fa-cart-circle-check"></i> ¡Éxito!';
-                        window.open(
-                            `{{ route('ventas.index') }}/${response.venta.id_venta}/imprimir`,
-                            '_blank', 'noopener,noreferrer');
-                    } else {
-                        btnCrearVenta.disabled = false;
-                        btnCrearVenta.innerHTML =
-                            '<i class="fa-solid fa-duotone fa-save"></i> Guardar venta';
-                        Swal.fire('Error', response.message, 'error');
-                    }
-                },
-                error: function(xhr) {
-                    btnCrearVenta.disabled = false;
-                    btnCrearVenta.innerHTML =
-                        '<i class="fa-solid fa-duotone fa-save"></i> Guardar venta';
-
-                    //console.error(xhr.responseText);
-                    //console.error(JSON.parse(xhr.responseText));
-
-                    let message = JSON.parse(xhr.responseText).message;
-
-                    Swal.fire({
-                        theme: 'auto',
-                        title: 'Error',
-                        html: 'Ocurrió un error al intentar la acción:<br>' + message,
-                        icon: 'error',
-                    });
-                }
-            });
-        }
-
-        // Navegación con flechas en celdas editables
-        document.getElementById('productos').addEventListener('keydown', function(e) {
-            if (!e.target.hasAttribute('contenteditable')) return;
-
-            const tecla = e.key;
-            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(tecla)) return;
-
-            const celda = e.target;
-            const fila = celda.parentElement;
-            const filas = Array.from(this.querySelectorAll('tbody tr'));
-            const celdas = Array.from(fila.querySelectorAll('[contenteditable="true"]'));
-
-            const indiceFila = filas.indexOf(fila);
-            const indiceCelda = celdas.indexOf(celda);
-
-            let nuevaCelda = null;
-
-            switch (tecla) {
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (indiceFila > 0) {
-                        nuevaCelda = filas[indiceFila - 1].querySelectorAll('[contenteditable="true"]')[
-                            indiceCelda];
-                    }
-                    break;
-
-                case 'ArrowDown':
-                case 'Enter':
-                    e.preventDefault();
-                    if (indiceFila < filas.length - 1) {
-                        nuevaCelda = filas[indiceFila + 1].querySelectorAll('[contenteditable="true"]')[
-                            indiceCelda];
-                    }
-                    break;
-
-                case 'ArrowLeft':
-                    if (window.getSelection().anchorOffset === 0) {
-                        e.preventDefault();
-                        if (indiceCelda > 0) {
-                            nuevaCelda = celdas[indiceCelda - 1];
-                        }
-                    }
-                    break;
-
-                case 'ArrowRight':
-                    const texto = celda.textContent;
-                    if (window.getSelection().anchorOffset === texto.length) {
-                        e.preventDefault();
-                        if (indiceCelda < celdas.length - 1) {
-                            nuevaCelda = celdas[indiceCelda + 1];
-                        }
-                    }
-                    break;
-            }
-
-            if (nuevaCelda) {
-                nuevaCelda.focus();
-                // Seleccionar todo el contenido al navegar
-                const rango = document.createRange();
-                rango.selectNodeContents(nuevaCelda);
-                const seleccion = window.getSelection();
-                seleccion.removeAllRanges();
-                seleccion.addRange(rango);
-            }
-        });
-
-        // Aplicar hacia abajo cambios en celdas editables
-        /*
-        $("#productos").on("blur", ".precioUSD", function() {
-            const celda = $(this);
-            const valor = celda.text().trim();
-            const clase = celda.attr("class").split(" ").find(c => ["precioUSD"].includes(c));
-
-            if (!clase) return;
-
-            // Aplicar hacia abajo
-            const tabla = $("#productos");
-            let aplicarHaciaAbajo = false;
-
-            tabla.find("tbody tr").each(function() {
-                const fila = $(this);
-                const celdaActual = fila.find(`.${clase}`);
-
-                if (celdaActual.is(celda)) {
-                    aplicarHaciaAbajo = true; // Empezar a aplicar hacia abajo desde esta fila
-                } else if (aplicarHaciaAbajo) {
-                    celdaActual.text(valor);
-                }
-            });
-
-            actualizarTotalPagosSaldo();
-        });
-        */
-
-        function actualizarResumen() {
-            let resumen = {};
-            let cantidad_total = 0;
-            $("#productos tbody tr").each(function() {
-                let nombre = $(this).find(".nombreProducto").text().trim().toUpperCase();
-                let precioUSD = parseFloat($(this).find(".precioUSD").text()) || 0;
-
-                // Si ya existe el producto, sumamos sus valores
-                if (!resumen[nombre]) {
-                    resumen[nombre] = {
-                        precioUSD: 0,
-                        cantidad: 0
-                    };
-                }
-
-                resumen[nombre].precioUSD += precioUSD;
-                resumen[nombre].cantidad += 1;
-                cantidad_total += 1;
-            });
-
-            // Limpiamos la tabla resumen
-            let tbody = $("#resumen_productos tbody");
-            tbody.empty();
-
-            // Insertamos filas nuevas con los totales
-            for (let nombre in resumen) {
-                let r = resumen[nombre];
-                tbody.append(`
-                    <tr class="table-primary" data-producto="${nombre}">
-                        <td>${nombre}</td>
-                        <td>${r.precioUSD.toFixed(2)}</td>
-                        <td class="cantidad">${r.cantidad}</td>
-                    </tr>
-                `);
-            }
-
-            $("#resumen_productos_cantidad_total").text(cantidad_total);
+    document.getElementById('select-cliente').addEventListener('change', function() {
+        const id = parseInt(this.value);
+        const cliente = STATE.clientes.find(c => c.id_cliente === id) ?? null;
+        STATE.clienteSeleccionado = cliente;
+        const info = document.getElementById('cliente-info');
+        const btnEdit = document.getElementById('btn-editar-cliente');
+        if (cliente) {
+            document.getElementById('cliente-celular').textContent = cliente.celular;
+            document.getElementById('cliente-estancia').textContent = cliente.estancia;
+            info.classList.remove('d-none');
+            btnEdit.disabled = false;
+        } else {
+            info.classList.add('d-none');
+            btnEdit.disabled = true;
         }
     });
+
+    /* ═══════════════════════════════════════════════════════
+       MODAL CLIENTE
+    ═══════════════════════════════════════════════════════ */
+    const modalCliente = new bootstrap.Modal(document.getElementById('modal-cliente'));
+
+    document.getElementById('btn-nuevo-cliente').addEventListener('click', () => {
+        document.getElementById('cliente-edit-id').value = '';
+        document.getElementById('cliente-nombre').value = '';
+        document.getElementById('cliente-celular-input').value = '';
+        document.getElementById('cliente-estancia-input').value = '';
+        document.getElementById('modal-cliente-titulo').innerHTML =
+            '<i class="fa-solid fa-user-plus me-2"></i>Nuevo cliente';
+        document.getElementById('modal-cliente-error').classList.add('d-none');
+        modalCliente.show();
+    });
+
+    document.getElementById('btn-editar-cliente').addEventListener('click', () => {
+        const c = STATE.clienteSeleccionado;
+        if (!c) return;
+        document.getElementById('cliente-edit-id').value = c.id_cliente;
+        document.getElementById('cliente-nombre').value = c.nombre;
+        document.getElementById('cliente-celular-input').value = c.celular;
+        document.getElementById('cliente-estancia-input').value = c.estancia;
+        document.getElementById('modal-cliente-titulo').innerHTML =
+            '<i class="fa-solid fa-pen-to-square me-2"></i>Editar cliente';
+        document.getElementById('modal-cliente-error').classList.add('d-none');
+        modalCliente.show();
+    });
+
+    document.getElementById('btn-guardar-cliente').addEventListener('click', async () => {
+        const editId = document.getElementById('cliente-edit-id').value;
+        const nombre = document.getElementById('cliente-nombre').value.trim();
+        const celular = document.getElementById('cliente-celular-input').value.trim();
+        const estancia = document.getElementById('cliente-estancia-input').value.trim();
+        const errEl = document.getElementById('modal-cliente-error');
+        errEl.classList.add('d-none');
+
+        if (!nombre || !celular || !estancia) {
+            errEl.textContent = 'Todos los campos son obligatorios.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        const isEdit = editId !== '';
+        const url = isEdit ? `/clientes/${editId}` : "{{ route('clientes.create') }}";
+        const method = isEdit ? 'PUT' : 'POST';
+
+        try {
+            const r = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken()
+                },
+                body: JSON.stringify({
+                    nombre,
+                    celular,
+                    estancia
+                }),
+            });
+            const data = await r.json();
+            if (data.success) {
+                const idSeleccionar = isEdit ? parseInt(editId) : (data.cliente?.id_cliente ?? null);
+                await cargarClientes(idSeleccionar);
+                modalCliente.hide();
+                showAlert(data.message ?? 'Cliente guardado correctamente.', 'success');
+            } else {
+                errEl.innerHTML = data.message ?? 'Error al guardar el cliente.';
+                errEl.classList.remove('d-none');
+            }
+        } catch (e) {
+            errEl.textContent = 'Error de conexión.';
+            errEl.classList.remove('d-none');
+        }
+    });
+
+    /* ═══════════════════════════════════════════════════════
+       AGREGAR BOVINO DESDE SELECT
+    ═══════════════════════════════════════════════════════ */
+    document.getElementById('btn-agregar-bovino').addEventListener('click', () => {
+        const sel = document.getElementById('select-bovino');
+        const idBovino = parseInt(sel.value);
+        if (!idBovino) return;
+
+        const b = STATE.listaBovinosActivos.find(x => x.id_bovino === idBovino);
+        if (!b) return;
+
+        STATE.bovinos.push({
+            id_bovino: b.id_bovino,
+            identificador: b.identificador,
+            genero: b.genero,
+            potrero: b.potrero?.nombre ?? '—',
+            carimbo: new Date(b.fecha_nacimiento).getFullYear(),
+            peso_actual: parseFloat(b.peso_actual),
+            tipo_precio: 'fijo',
+            precio_fijo: 0,
+            precio_kg: 0,
+            destare: 0,
+            rendimiento: 0,
+            kg_peso_vivo: parseFloat(b.peso_actual),
+            kg_peso_gancho: 0,
+            subtotal: 0,
+        });
+
+        actualizarSelectBovino();
+        sel.value = '';
+        renderBovinos();
+        recalcularTotales();
+    });
+
+    /* ═══════════════════════════════════════════════════════
+       RENDER TABLA BOVINOS
+    ═══════════════════════════════════════════════════════ */
+    function renderBovinos() {
+        const tbody = document.getElementById('bovinos-tbody');
+        tbody.innerHTML = '';
+
+        if (!STATE.bovinos.length) {
+            tbody.innerHTML = `
+            <tr id="bovinos-empty">
+                <td colspan="11" class="text-center text-muted py-3 small">
+                    <i class="fa-solid fa-cow me-1 opacity-50"></i>Aún no se han agregado bovinos
+                </td>
+            </tr>`;
+            return;
+        }
+
+        STATE.bovinos.forEach((bov, idx) => {
+            const esFijo = bov.tipo_precio === 'fijo';
+            const tr = document.createElement('tr');
+            tr.dataset.idx = idx;
+
+            tr.innerHTML = `
+            <td class="text-center text-muted small">${idx + 1}</td>
+            <td class="small">
+                <div class="fw-semibold">${bov.identificador}</div>
+                <div class="text-muted" style="font-size:0.73rem">C:${bov.carimbo} &middot; ${bov.genero === 'macho' ? 'Macho' : 'Hembra'}</div>
+            </td>
+            <td class="small text-muted">${bov.potrero}</td>
+            <td class="text-center small fw-semibold">${fmtNum(bov.peso_actual)}</td>
+            <td class="text-center">
+                <select class="form-select form-select-sm bov-tipo-precio" data-idx="${idx}">
+                    <option value="fijo"  ${esFijo  ? 'selected' : ''}>Precio fijo</option>
+                    <option value="kg"    ${!esFijo ? 'selected' : ''}>Por kg</option>
+                </select>
+            </td>
+            <td class="text-center">
+                ${esFijo
+                    ? `<input type="number" class="form-control form-control-sm bov-precio-fijo" data-idx="${idx}" value="${bov.precio_fijo}" min="0" step="0.01" placeholder="Bs." style="width:90px">`
+                    : `<input type="number" class="form-control form-control-sm bov-precio-kg"   data-idx="${idx}" value="${bov.precio_kg}"   min="0" step="0.01" placeholder="Bs./kg" style="width:90px">`
+                }
+            </td>
+            <td class="text-center">
+                ${esFijo
+                    ? `<span class="text-muted">—</span>`
+                    : `<input type="number" class="form-control form-control-sm bov-destare" data-idx="${idx}" value="${bov.destare}" min="0" max="100" step="0.1" placeholder="%" style="width:70px">`
+                }
+            </td>
+            <td class="text-center">
+                ${esFijo
+                    ? `<span class="text-muted">—</span>`
+                    : `<input type="number" class="form-control form-control-sm bov-rendimiento" data-idx="${idx}" value="${bov.rendimiento}" min="0" max="100" step="0.1" placeholder="%" style="width:70px">`
+                }
+            </td>
+            <td class="text-center small text-muted bov-kg-gancho">${esFijo ? '—' : fmtNum(bov.kg_peso_gancho)}</td>
+            <td class="text-center small fw-bold text-info bov-subtotal">${fmt(bov.subtotal)}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger bov-btn-quitar" data-idx="${idx}" title="Quitar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </td>
+        `;
+            tbody.appendChild(tr);
+        });
+
+        // Cambio tipo precio
+        tbody.querySelectorAll('.bov-tipo-precio').forEach(sel => {
+            sel.addEventListener('change', () => {
+                const idx = parseInt(sel.dataset.idx);
+                Object.assign(STATE.bovinos[idx], {
+                    tipo_precio: sel.value,
+                    precio_fijo: 0,
+                    precio_kg: 0,
+                    destare: 0,
+                    rendimiento: 0,
+                    kg_peso_gancho: 0,
+                    subtotal: 0,
+                });
+                renderBovinos();
+                recalcularTotales();
+            });
+        });
+
+        // Precio fijo
+        tbody.querySelectorAll('.bov-precio-fijo').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const idx = parseInt(inp.dataset.idx);
+                STATE.bovinos[idx].precio_fijo = parseFloat(inp.value) || 0;
+                STATE.bovinos[idx].subtotal = STATE.bovinos[idx].precio_fijo;
+                actualizarFilaSubtotal(tbody, idx);
+                recalcularTotales();
+            });
+        });
+
+        // Precio por kg / destare / rendimiento
+        tbody.querySelectorAll('.bov-precio-kg, .bov-destare, .bov-rendimiento').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const idx = parseInt(inp.dataset.idx);
+                const bov = STATE.bovinos[idx];
+                if (inp.classList.contains('bov-precio-kg')) bov.precio_kg = parseFloat(inp.value) || 0;
+                if (inp.classList.contains('bov-destare')) bov.destare = parseFloat(inp.value) || 0;
+                if (inp.classList.contains('bov-rendimiento')) bov.rendimiento = parseFloat(inp
+                    .value) || 0;
+                bov.kg_peso_gancho = (bov.kg_peso_vivo - bov.kg_peso_vivo * bov.destare / 100) * bov
+                    .rendimiento / 100;
+                bov.subtotal = bov.precio_kg * bov.kg_peso_gancho;
+                actualizarFilaSubtotal(tbody, idx);
+                recalcularTotales();
+            });
+        });
+
+        // Quitar bovino
+        tbody.querySelectorAll('.bov-btn-quitar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                STATE.bovinos.splice(parseInt(btn.dataset.idx), 1);
+                actualizarSelectBovino();
+                renderBovinos();
+                recalcularTotales();
+            });
+        });
+    }
+
+    function actualizarFilaSubtotal(tbody, idx) {
+        const tr = tbody.querySelector(`tr[data-idx="${idx}"]`);
+        if (!tr) return;
+        const bov = STATE.bovinos[idx];
+        const tdGancho = tr.querySelector('.bov-kg-gancho');
+        const tdSub = tr.querySelector('.bov-subtotal');
+        if (tdGancho && bov.tipo_precio === 'kg') tdGancho.textContent = fmtNum(bov.kg_peso_gancho);
+        if (tdSub) tdSub.textContent = fmt(bov.subtotal);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PAGOS
+    ═══════════════════════════════════════════════════════ */
+    document.getElementById('btn-agregar-pago').addEventListener('click', () => {
+        STATE.pagos.push({
+            tipo_pago: 'Efectivo',
+            monto: 0,
+            fecha_pago: new Date().toISOString().slice(0, 10),
+        });
+        renderPagos();
+        recalcularTotales();
+    });
+
+    function renderPagos() {
+        const cont = document.getElementById('pagos-container');
+        cont.innerHTML = '';
+
+        if (!STATE.pagos.length) {
+            cont.innerHTML = `
+            <p id="pagos-empty" class="text-center text-muted small py-2 mb-0">
+                <i class="fa-regular fa-credit-card me-1 opacity-50"></i>Sin pagos registrados
+            </p>`;
+            return;
+        }
+
+        STATE.pagos.forEach((pago, idx) => {
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-center mb-2';
+            row.innerHTML = `
+            <div class="col-sm-4">
+                <select class="form-select form-select-sm pago-tipo" data-idx="${idx}">
+                    ${TIPOS_PAGO.map(t => `<option value="${t}" ${pago.tipo_pago === t ? 'selected' : ''}>${t}</option>`).join('')}
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <input type="number" class="form-control form-control-sm pago-monto" data-idx="${idx}"
+                    value="${pago.monto}" min="0" step="0.01" placeholder="Monto">
+            </div>
+            <div class="col-sm-4">
+                <input type="date" class="form-control form-control-sm pago-fecha" data-idx="${idx}"
+                    value="${pago.fecha_pago}">
+            </div>
+            <div class="col-sm-1 text-end">
+                <button class="btn btn-sm btn-outline-danger pago-btn-quitar" data-idx="${idx}" title="Quitar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `;
+            cont.appendChild(row);
+        });
+
+        cont.querySelectorAll('.pago-tipo').forEach(sel => {
+            sel.addEventListener('change', () => {
+                STATE.pagos[parseInt(sel.dataset.idx)].tipo_pago = sel.value;
+            });
+        });
+        cont.querySelectorAll('.pago-monto').forEach(inp => {
+            inp.addEventListener('input', () => {
+                STATE.pagos[parseInt(inp.dataset.idx)].monto = parseFloat(inp.value) || 0;
+                recalcularTotales();
+            });
+        });
+        cont.querySelectorAll('.pago-fecha').forEach(inp => {
+            inp.addEventListener('change', () => {
+                STATE.pagos[parseInt(inp.dataset.idx)].fecha_pago = inp.value;
+            });
+        });
+        cont.querySelectorAll('.pago-btn-quitar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                STATE.pagos.splice(parseInt(btn.dataset.idx), 1);
+                renderPagos();
+                recalcularTotales();
+            });
+        });
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RESUMEN
+    ═══════════════════════════════════════════════════════ */
+    function recalcularTotales() {
+        const total = STATE.bovinos.reduce((s, b) => s + b.subtotal, 0);
+        const pagado = STATE.pagos.reduce((s, p) => s + p.monto, 0);
+        const pendiente = Math.max(0, total - pagado);
+
+        document.getElementById('res-cantidad').textContent = STATE.bovinos.length;
+        document.getElementById('res-total').textContent = fmt(total);
+        document.getElementById('res-pagado').textContent = fmt(pagado);
+        document.getElementById('res-pendiente').textContent = fmt(pendiente);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       GUARDAR VENTA
+    ═══════════════════════════════════════════════════════ */
+    document.getElementById('btn-guardar-venta').addEventListener('click', async () => {
+        const idCliente = document.getElementById('select-cliente').value;
+        const fechaVenta = document.getElementById('fecha-venta').value;
+
+        if (!idCliente) {
+            showAlert('Selecciona un cliente para continuar.');
+            return;
+        }
+        if (!fechaVenta) {
+            showAlert('Indica la fecha de venta.');
+            return;
+        }
+        if (!STATE.bovinos.length) {
+            showAlert('Agrega al menos un bovino a la venta.');
+            return;
+        }
+
+        for (const b of STATE.bovinos) {
+            if (b.tipo_precio === 'fijo' && b.precio_fijo <= 0) {
+                showAlert(
+                    `El bovino <b>${b.identificador}</b> tiene precio fijo en 0. Ingresa un valor válido.`
+                );
+                return;
+            }
+            if (b.tipo_precio === 'kg' && b.precio_kg <= 0) {
+                showAlert(
+                    `El bovino <b>${b.identificador}</b> tiene precio/kg en 0. Ingresa un valor válido.`
+                );
+                return;
+            }
+        }
+
+        const total = STATE.bovinos.reduce((s, b) => s + b.subtotal, 0);
+
+        const payload = {
+            id_cliente: parseInt(idCliente),
+            fecha_venta: fechaVenta,
+            total,
+            bovinos: STATE.bovinos.map(b => ({
+                id_bovino: b.id_bovino,
+                precio_fijo: b.tipo_precio === 'fijo' ? b.precio_fijo : 0,
+                precio_kg: b.tipo_precio === 'kg' ? b.precio_kg : 0,
+                destare: b.destare,
+                rendimiento: b.rendimiento,
+                kg_peso_vivo: b.kg_peso_vivo,
+                kg_peso_gancho: b.kg_peso_gancho,
+                subtotal: b.subtotal,
+                observacion: null,
+            })),
+            pagos: STATE.pagos.map(p => ({
+                tipo_pago: p.tipo_pago,
+                monto: p.monto,
+                fecha_pago: p.fecha_pago,
+            })),
+        };
+
+        const btn = document.getElementById('btn-guardar-venta');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando\u2026';
+
+        try {
+            const r = await fetch("{{ route('ventas.create') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken()
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await r.json();
+            if (data.success) {
+                showAlert(data.message ?? 'Venta registrada correctamente.', 'success');
+                setTimeout(() => window.location.href = "{{ route('ventas.index') }}", 1200);
+            } else {
+                showAlert(data.message ?? 'Error al registrar la venta.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Registrar venta';
+            }
+        } catch (e) {
+            showAlert('Error de conexi\u00f3n. Intenta nuevamente.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i>Registrar venta';
+        }
+    });
+
+    /* ═══════════════════════════════════════════════════════
+       INIT
+    ═══════════════════════════════════════════════════════ */
+    cargarBovinos();
+    cargarClientes();
+    recalcularTotales();
 </script>

@@ -8,7 +8,7 @@
             <div class="col-4"></div>
 
             <div class="col-4">
-                <form id="formCreateOrEdit">
+                <form id="form-crear-o-editar">
                     <!-- input de idEmpleado en caso de editar -->
                     <input type="hidden" name="idEmpleado" value="0">
 
@@ -48,7 +48,7 @@
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
-                    data: $('#formCreateOrEdit').serialize(),
+                    data: $('#form-crear-o-editar').serialize(),
                     success: function(response) {
                         if (response.success) {
                             Swal.fire('Éxito', response.message, 'success');

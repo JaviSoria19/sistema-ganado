@@ -46,11 +46,11 @@
         recargarClientesSelect(venta_idCliente);
 
         $(document).on('click', '.btn-crear', function() {
-            $('#formCreateOrEdit input[name="id_cliente"]').val(0);
-            $('#formCreateOrEdit input[name="nombreCliente"]').val('');
-            $('#formCreateOrEdit input[name="celular"]').val('');
-            $('#formCreateOrEdit input[name="cedulaIdentidad"]').val('');
-            $('#formCreateOrEdit input[name="procedencia"]').val('');
+            $('#form-crear-o-editar input[name="id_cliente"]').val(0);
+            $('#form-crear-o-editar input[name="nombreCliente"]').val('');
+            $('#form-crear-o-editar input[name="celular"]').val('');
+            $('#form-crear-o-editar input[name="cedulaIdentidad"]').val('');
+            $('#form-crear-o-editar input[name="procedencia"]').val('');
 
             const titleElement = document.getElementById('modalCreateOrEdit_Title');
             titleElement.innerHTML = '<i class="fa-solid fa-duotone fa-plus"></i> CREAR CLIENTE';
@@ -72,13 +72,13 @@
             }
 
             $.get("{{ route('clientes.index') . '/' }}" + id, function(cliente) {
-                $('#formCreateOrEdit input[name="id_cliente"]').val(cliente.data.id_cliente);
-                $('#formCreateOrEdit input[name="nombreCliente"]').val(cliente.data
+                $('#form-crear-o-editar input[name="id_cliente"]').val(cliente.data.id_cliente);
+                $('#form-crear-o-editar input[name="nombreCliente"]').val(cliente.data
                     .nombreCliente);
-                $('#formCreateOrEdit input[name="celular"]').val(cliente.data.celular);
-                $('#formCreateOrEdit input[name="cedulaIdentidad"]').val(cliente.data
+                $('#form-crear-o-editar input[name="celular"]').val(cliente.data.celular);
+                $('#form-crear-o-editar input[name="cedulaIdentidad"]').val(cliente.data
                     .cedulaIdentidad);
-                $('#formCreateOrEdit input[name="procedencia"]').val(cliente.data.procedencia);
+                $('#form-crear-o-editar input[name="procedencia"]').val(cliente.data.procedencia);
 
                 const titleElement = document.getElementById('modalCreateOrEdit_Title');
                 titleElement.innerHTML =
@@ -88,7 +88,7 @@
         });
 
         $(document).on('click', '#btnGuardar', function() {
-            const id_cliente = $('#formCreateOrEdit input[name="id_cliente"]').val();
+            const id_cliente = $('#form-crear-o-editar input[name="id_cliente"]').val();
             const url = id_cliente == 0 ?
                 "{{ route('clientes.create') }}" // POST -> crear
                 :
@@ -102,7 +102,7 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                data: $('#formCreateOrEdit').serialize(),
+                data: $('#form-crear-o-editar').serialize(),
                 success: function(response) {
                     if (response.success) {
                         Swal.fire('Éxito', response.message, 'success');

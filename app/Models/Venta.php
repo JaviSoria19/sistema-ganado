@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Venta extends Model
 {
@@ -56,7 +57,25 @@ class Venta extends Model
 
     public function get_all_ventas(array $filters = [])
     {
-        $query = Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->orderBy('id_venta', 'ASC');
+        $query = Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')
+            ->addSelect([
+                '*',
+                DB::raw('(
+                SELECT COALESCE(SUM(p.monto), 0)
+                FROM pagos p
+                WHERE p.id_venta = ventas.id_venta
+                AND p.estado = "activo"
+            ) AS total_pagado'),
+                DB::raw('(
+                ventas.total - (
+                    SELECT COALESCE(SUM(p.monto), 0)
+                    FROM pagos p
+                    WHERE p.id_venta = ventas.id_venta
+                    AND p.estado = "activo"
+                )
+            ) AS saldo'),
+            ])
+            ->orderBy('id_venta', 'ASC');
 
         if ($filters['fecha_inicio'] && $filters['fecha_fin']) {
             $query->whereBetween('fecha_venta', [

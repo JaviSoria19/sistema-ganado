@@ -8,7 +8,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="formCreateOrEdit">
+                <form id="form-crear-o-editar">
                     <!-- input de id_usuario en caso de editar -->
                     <input type="hidden" name="id_usuario" value="0">
 
