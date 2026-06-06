@@ -272,7 +272,7 @@ class VentaController extends Controller
 
                 $bovino = Bovino::find($detalle['id_bovino']);
                 $bovino->estado = 'vendido';
-                $bovino->fechaVenta = now();
+                $bovino->fecha_salida = now();
                 $bovino->save();
             }
 
@@ -282,18 +282,17 @@ class VentaController extends Controller
                     $p = new Pago();
                     $p->id_venta = $venta->id_venta;
                     $p->monto = $pago['monto'];
+                    $p->tipo_pago = $pago['tipo_pago'];
                     $p->fecha_pago = $pago['fecha_pago'];
                     $p->save();
                 } else {
                     $p = Pago::find($pago['id_pago']);
-                    // Actualizar solo si el pago es menor o igual a 0.00 (editable)
-                    if ($p->monto <= '0.00') {
-                        $p->monto = $pago['monto'];
-                        $p->fecha_pago = $pago['fecha_pago'];
-                        $p->fecha_registro = Carbon::now();
-                        $p->modificado_por = session('id_usuario');
-                        $p->save();
-                    }
+                    $p->monto = $pago['monto'];
+                    $p->tipo_pago = $pago['tipo_pago'];
+                    $p->fecha_pago = $pago['fecha_pago'];
+                    $p->fecha_registro = now();
+                    $p->modificado_por = session('id_usuario');
+                    $p->save();
                 }
             }
 
