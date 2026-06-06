@@ -139,6 +139,25 @@ class VentaController extends Controller
             }
         }
 
+        // Validar pagos antes de iniciar la transacción
+        if (!empty($request->pagos)) {
+            foreach ($request->pagos as $pago) {
+                if (!isset($pago['monto']) || !is_numeric($pago['monto']) || $pago['monto'] <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cada pago debe tener un monto válido mayor a 0.'
+                    ], 400);
+                }
+
+                if (!isset($pago['fecha_pago']) || !strtotime($pago['fecha_pago'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cada pago debe tener una fecha de pago válida.'
+                    ], 400);
+                }
+            }
+        }
+
         DB::beginTransaction();
 
         try {

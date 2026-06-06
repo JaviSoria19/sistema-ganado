@@ -87,7 +87,7 @@
                                         <th class="text-center">Rend. %</th>
                                         <th class="text-center">Kg Gancho</th>
                                         <th class="text-center">Subtotal</th>
-                                        <th style="width:40px"></th>
+                                        <th style="width:40px">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bovinos-tbody">

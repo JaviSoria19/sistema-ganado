@@ -1,4 +1,11 @@
 <script>
+    $('.select2').select2({
+        width: '90%',
+        language: "es",
+        dropdownCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+        selectionCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+    });
+
     /* ═══════════════════════════════════════════════════════
        ESTADO GLOBAL
     ═══════════════════════════════════════════════════════ */
@@ -51,9 +58,12 @@
             const sel = (b.id_bovino == selectedId) ? 'selected' : '';
             const carimbo = new Date(b.fecha_nacimiento).getFullYear();
             const potrero = b.potrero ? `P: ${b.potrero.nombre}` : 'Sin potrero';
-            const peso = b.peso_actual ? `(${b.peso_actual}kg)` : '';
+            const peso = b.peso_actual ? `${b.peso_actual} kg` : '';
+            const genero = b.genero === 'macho' ? 'Macho' : 'Hembra';
             html +=
-                `<option value="${b.id_bovino}" ${sel}>C: ${carimbo} ${b.identificador} ${peso} (${b.color_actual}) ${potrero}</option>`;
+                `<option value="${b.id_bovino}" ${sel}>
+                    C: ${carimbo} ${b.identificador} - ${genero} - ${peso} (${b.color_actual}) ${potrero}
+                </option>`;
         });
         return html;
     }
@@ -101,15 +111,22 @@
         }
     }
 
-    document.getElementById('select-cliente').addEventListener('change', function() {
+    $('#select-cliente').on('change', function() {
         const id = parseInt(this.value);
-        const cliente = STATE.clientes.find(c => c.id_cliente === id) ?? null;
+
+        const cliente = STATE.clientes.find(
+            c => c.id_cliente == id
+        ) ?? null;
+
         STATE.clienteSeleccionado = cliente;
+
         const info = document.getElementById('cliente-info');
         const btnEdit = document.getElementById('btn-editar-cliente');
+
         if (cliente) {
             document.getElementById('cliente-celular').textContent = cliente.celular;
             document.getElementById('cliente-estancia').textContent = cliente.estancia;
+
             info.classList.remove('d-none');
             btnEdit.disabled = false;
         } else {
@@ -162,7 +179,7 @@
         }
 
         const isEdit = editId !== '';
-        const url = isEdit ? `/clientes/${editId}` : "{{ route('clientes.create') }}";
+        const url = isEdit ? `{{ route('clientes.update', ':id') }}`.replace(':id', editId) : "{{ route('clientes.create') }}";
         const method = isEdit ? 'PUT' : 'POST';
 
         try {
@@ -525,7 +542,12 @@
             const data = await r.json();
             if (data.success) {
                 showAlert(data.message ?? 'Venta registrada correctamente.', 'success');
-                setTimeout(() => window.location.href = "{{ route('ventas.index') }}", 1200);
+                window.open("{{ route('ventas.imprimir', ':id') }}".replace(':id',
+                            data.venta.id_venta), '_blank',
+                        'noopener,noreferrer');
+                setTimeout(() => 
+                window.location.href = "{{ route('ventas.index') }}", 1200
+                );
             } else {
                 showAlert(data.message ?? 'Error al registrar la venta.');
                 btn.disabled = false;
@@ -541,7 +563,9 @@
     /* ═══════════════════════════════════════════════════════
        INIT
     ═══════════════════════════════════════════════════════ */
-    cargarBovinos();
-    cargarClientes();
-    recalcularTotales();
+    (async () => {
+        await cargarBovinos();
+        await cargarClientes();
+        recalcularTotales();
+    })();
 </script>

@@ -257,6 +257,13 @@ class BovinoController extends Controller
 
         $bovino = (new Bovino())->get_bovino($id_bovino);
 
+        if ($bovino->estado === 'vendido') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede modificar un bovino que fue vendido.'
+            ], 400);
+        }
+        
         // Si el peso actual ha cambiado, se registra un nuevo registro en la tabla de pesaje histórica.
         if($bovino->peso_actual != $request->peso_actual) {
             $pesaje_historico = new PesajeHistorico();

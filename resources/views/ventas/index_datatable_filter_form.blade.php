@@ -2,23 +2,22 @@
     <h3><i class="fa-solid fa-duotone fa-filter"></i> Filtrar tabla de ventas por:</h3>
     <br>
     <div class="col-md-2">
-        <label for="fecha_inicio" class="form-label">Fecha de inicio</label>
-        <input type="date" id="busqueda-fecha_inicio" name="fecha_inicio" class="form-control"
-            value="{{ date('Y-m-d', strtotime('-1 month')) }}">
+        <label for="fecha_inicio" class="form-label">Fecha de venta - inicio</label>
+        <input type="date" id="busqueda-fecha_inicio" name="fecha_inicio" class="form-control" value="">
     </div>
 
     <div class="col-md-2">
-        <label for="fecha_fin" class="form-label">Fecha de fin</label>
-        <input type="date" id="busqueda-fecha_fin" name="fecha_fin" class="form-control"
-            value="{{ date('Y-m-d') }}">
+        <label for="fecha_fin" class="form-label">Fecha de venta - fin</label>
+        <input type="date" id="busqueda-fecha_fin" name="fecha_fin" class="form-control" value="">
     </div>
 
     <div class="col-md-2">
-        <label for="estado" class="form-label">Estado</label>
-        <select id="busqueda-estado" name="estado" class="form-select">
+        <label for="busqueda-id_cliente" class="form-label">Cliente</label>
+        <select id="busqueda-id_cliente" name="id_cliente" class="form-select select2">
             <option value="">Todos</option>
-            <option value="activo">Activo</option>
-            <option value="eliminado">Eliminado</option>
+            @foreach ($clientes as $cliente)
+                <option value="{{ $cliente->id_cliente }}">{{ $cliente->nombre }}</option>
+            @endforeach
         </select>
     </div>
 
@@ -33,12 +32,11 @@
     </div>
 
     <div class="col-md-2">
-        <label for="busqueda-id_cliente" class="form-label">Cliente</label>
-        <select id="busqueda-id_cliente" name="id_cliente" class="form-select">
+        <label for="estado" class="form-label">Estado</label>
+        <select id="busqueda-estado" name="estado" class="form-select">
             <option value="">Todos</option>
-            @foreach ($clientes as $cliente)
-                <option value="{{ $cliente->id_cliente }}">{{ $cliente->nombre }}</option>
-            @endforeach
+            <option value="activo">Activo</option>
+            <option value="eliminado">Eliminado</option>
         </select>
     </div>
 

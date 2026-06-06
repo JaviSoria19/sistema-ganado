@@ -1,5 +1,12 @@
 <script>
     $(document).ready(function() {
+        $('.select2').select2({
+            width: '100%',
+            language: "es",
+            dropdownCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+            selectionCssClass: "{{ session('tema_preferido') == 'dark' ? 'bg-dark' : '' }}",
+        });
+
         $("#form-filter-ventas").on("click", function(e) {
             e.preventDefault();
             $("#dataTable").DataTable().ajax.reload();
@@ -29,9 +36,6 @@
                 },
                 {
                     data: "fecha_venta",
-                    render: function(data, type, row) {
-                        return new Date(data).toLocaleDateString();
-                    }
                 },
                 {
                     data: "cliente",
@@ -49,10 +53,11 @@
                         return data.map((bovino, index) => {
                             const carimbo = new Date(bovino.fecha_nacimiento)
                                 .getFullYear();
-                            const tipoPrecio = bovino.pivot.precio_fijo > 0 ? "Precio fijo" : "Precio por kg";
+                            const tipoPrecio = bovino.pivot.precio_fijo > 0 ?
+                                "Precio fijo" : "Precio por kg";
                             return `
                                 <b>
-                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> a <span class="text-success">${bovino.pivot.subtotal} Bs.</span> (${tipoPrecio})
+                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> a <span class="text-success">${bovino.pivot.subtotal} Bs.</span> <span class="text-muted">(${tipoPrecio})</span>
                                 </b>
                                 `;
                         }).join("<br>");
@@ -162,9 +167,14 @@
                 }
             ],
             columnDefs: [{
-                targets: [2, 3, 5],
-                width: '300px',
-            }, ],
+                    targets: [1],
+                    width: '120px',
+                },
+                {
+                    targets: [2, 3, 5],
+                    width: '300px',
+                },
+            ],
             responsive: false,
             lengthChange: true,
             autoWidth: false,
