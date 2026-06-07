@@ -9,7 +9,7 @@
         <div class="row g-3">
 
             {{-- ════ COLUMNA PRINCIPAL ════ --}}
-            <div class="col-lg-8">
+            <div class="col-lg-12">
 
                 {{-- ── CLIENTE ── --}}
                 <div class="card border-secondary mb-3">
@@ -123,6 +123,11 @@
 
             </div>{{-- /col principal --}}
 
+
+
+        </div>{{-- /row --}}
+
+        <div class="row g-3">
             {{-- ════ PANEL RESUMEN ════ --}}
             <div class="col-lg-4">
                 <div class="card border-secondary" style="position:sticky;top:1rem">
@@ -164,8 +169,7 @@
                     </div>
                 </div>
             </div>
-
-        </div>{{-- /row --}}
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════
