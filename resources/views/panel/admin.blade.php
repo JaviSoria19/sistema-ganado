@@ -38,11 +38,11 @@
             </nav>
             <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-ventas" role="tabpanel" aria-labelledby="nav-ventas-tab">
-                    {{-- @include('panel.admin_estadisticas_ventas') --}}
+                    @include('panel.admin_estadisticas_ventas')
                 </div>
 
                 <div class="tab-pane fade" id="nav-saldos" role="tabpanel" aria-labelledby="nav-saldos-tab">
-                    {{-- @include('panel.admin_estadisticas_saldos') --}}
+                    @include('panel.admin_estadisticas_saldos')
                 </div>
 
                 {{-- <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">

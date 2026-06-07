@@ -1,6 +1,7 @@
 <div class="row mb-3">
     <div class="col-12">
         <h4 class="text-dark-aquamarine fw-bold">VENTAS</h4>
+        <p class="text-muted small">La cantidad de ventas es considerada según la fecha de venta</p>
     </div>
 
     <div class="col-md-6 col-lg-4 mb-3">
@@ -49,6 +50,7 @@
 <div class="row mb-3">
     <div class="col-12">
         <h4 class="text-dark-aquamarine fw-bold">INGRESOS</h4>
+        <p class="text-muted small">Los ingresos son considerados según los pagos realizados</p>
     </div>
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card info-card shadow-sm border-success">
@@ -58,7 +60,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1 small">Ingresos de hoy</h6>
-                    <h3 class="fw-bold">$ {{ $estadisticas['hoy']['ingresos'] }}</h3>
+                    <h3 class="fw-bold">{{ $estadisticas['hoy']['ingresos'] }} Bs.</h3>
                 </div>
             </div>
         </div>
@@ -72,7 +74,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1 small">Ingresos de la semana</h6>
-                    <h3 class="fw-bold">$ {{ $estadisticas['semana']['ingresos'] }}</h3>
+                    <h3 class="fw-bold">{{ $estadisticas['semana']['ingresos'] }} Bs.</h3>
                 </div>
             </div>
         </div>
@@ -86,7 +88,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1 small">Ingresos del mes</h6>
-                    <h3 class="fw-bold">$ {{ $estadisticas['mes']['ingresos'] }}</h3>
+                    <h3 class="fw-bold">{{ $estadisticas['mes']['ingresos'] }} Bs.</h3>
                 </div>
             </div>
         </div>
@@ -95,17 +97,17 @@
 
 <div class="row">
     <div class="col-12">
-        <h4 class="text-dark-aquamarine fw-bold">PRODUCTOS</h4>
+        <h4 class="text-dark-aquamarine fw-bold">BOVINOS</h4>
     </div>
     <div class="col-md-6 col-lg-4 mb-3">
         <div class="card info-card shadow-sm border-primary">
             <div class="card-body d-flex align-items-center bg-primary bg-opacity-10">
                 <div class="icon-box bg-primary bg-opacity-10 me-3">
-                    <i class="text-primary fa-solid fa-duotone fa-boxes-stacked fa-xl"></i>
+                    <i class="text-primary fa-solid fa-duotone fa-cow fa-xl"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1 small">Productos vendidos de hoy</h6>
-                    <h3 class="fw-bold">{{ $estadisticas['hoy']['productosVendidos'] }}</h3>
+                    <h6 class="text-muted mb-1 small">Bovinos vendidos de hoy</h6>
+                    <h3 class="fw-bold">{{ $estadisticas['hoy']['bovinosVendidos'] }}</h3>
                 </div>
             </div>
         </div>
@@ -115,11 +117,11 @@
         <div class="card info-card shadow-sm border-primary">
             <div class="card-body d-flex align-items-center bg-primary bg-opacity-10">
                 <div class="icon-box bg-primary bg-opacity-10 me-3">
-                    <i class="text-primary fa-solid fa-duotone fa-boxes-stacked fa-xl"></i>
+                    <i class="text-primary fa-solid fa-duotone fa-cow fa-xl"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1 small">Productos vendidos de la semana</h6>
-                    <h3 class="fw-bold">{{ $estadisticas['semana']['productosVendidos'] }}</h3>
+                    <h6 class="text-muted mb-1 small">Bovinos vendidos de la semana</h6>
+                    <h3 class="fw-bold">{{ $estadisticas['semana']['bovinosVendidos'] }}</h3>
                 </div>
             </div>
         </div>
@@ -129,11 +131,11 @@
         <div class="card info-card shadow-sm border-primary">
             <div class="card-body d-flex align-items-center bg-primary bg-opacity-10">
                 <div class="icon-box bg-primary bg-opacity-10 me-3">
-                    <i class="text-primary fa-solid fa-duotone fa-boxes-stacked fa-xl"></i>
+                    <i class="text-primary fa-solid fa-duotone fa-cow fa-xl"></i>
                 </div>
                 <div>
-                    <h6 class="text-muted mb-1 small">Productos vendidos del mes</h6>
-                    <h3 class="fw-bold">{{ $estadisticas['mes']['productosVendidos'] }}</h3>
+                    <h6 class="text-muted mb-1 small">Bovinos vendidos del mes</h6>
+                    <h3 class="fw-bold">{{ $estadisticas['mes']['bovinosVendidos'] }}</h3>
                 </div>
             </div>
         </div>

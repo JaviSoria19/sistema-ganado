@@ -30,13 +30,9 @@
 
 <script>
     $(document).ready(function() {
-        $('#dataTable').DataTable({
+        $('.dataTable').DataTable({
             @include('components.datatables.datatables_global_properties')
             @include('components.datatables.datatables_language_property')
-        }).buttons().container().appendTo('#dataTableExportButtonsContainer');
-        $('#dataTable2').DataTable({
-            @include('components.datatables.datatables_global_properties')
-            @include('components.datatables.datatables_language_property')
-        }).buttons().container().appendTo('#dataTableExportButtonsContainer2');
+        });
     });
 </script>

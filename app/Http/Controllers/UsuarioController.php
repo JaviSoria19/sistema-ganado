@@ -28,8 +28,13 @@ class UsuarioController extends Controller
             session(['tiene_acceso' => false]);
         }
 
+        $estadisticas = (new Venta())->dashboard_get_estadisticas_ventas();
+        $saldos_pendientes = (new Venta())->dashboard_get_clientes_con_saldo();
+
         return view('panel.admin', [
             'head_title' => 'PANEL DE ADMINISTRACIÓN',
+            'estadisticas' => $estadisticas,
+            'saldos_pendientes' => $saldos_pendientes
         ]);
     }
 

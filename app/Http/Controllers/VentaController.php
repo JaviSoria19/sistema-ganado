@@ -10,7 +10,6 @@ use App\Models\Bovino;
 use App\Models\Cliente;
 use App\Models\Usuario;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class VentaController extends Controller
 {
