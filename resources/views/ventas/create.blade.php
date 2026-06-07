@@ -87,12 +87,13 @@
                                         <th class="text-center">Rend. %</th>
                                         <th class="text-center">Kg Gancho</th>
                                         <th class="text-center">Subtotal</th>
+                                        <th>Observaciones</th>
                                         <th style="width:40px">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bovinos-tbody">
                                     <tr id="bovinos-empty">
-                                        <td colspan="11" class="text-center text-muted py-3 small">
+                                        <td colspan="12" class="text-center text-muted py-3 small">
                                             <i class="fa-solid fa-cow me-1 opacity-50"></i>
                                             Aún no se han agregado bovinos
                                         </td>

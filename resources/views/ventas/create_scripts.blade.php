@@ -237,6 +237,7 @@
             kg_peso_vivo: parseFloat(b.peso_actual),
             kg_peso_gancho: 0,
             subtotal: 0,
+            observacion: '',
         });
 
         actualizarSelectBovino();
@@ -301,6 +302,9 @@
             </td>
             <td class="text-center small text-muted bov-kg-gancho">${esFijo ? '—' : fmtNum(bov.kg_peso_gancho)}</td>
             <td class="text-center small fw-bold text-info bov-subtotal">${fmt(bov.subtotal)}</td>
+            <td class="small">
+                <input type="text" class="form-control form-control-sm bov-observacion" data-idx="${idx}" value="${bov.observacion}" placeholder="Ej. Cicatriz" maxlength="255">
+            </td>
             <td class="text-center">
                 <button class="btn btn-sm btn-outline-danger bov-btn-quitar" data-idx="${idx}" title="Quitar">
                     <i class="fa-solid fa-xmark"></i>
@@ -363,6 +367,14 @@
                 actualizarSelectBovino();
                 renderBovinos();
                 recalcularTotales();
+            });
+        });
+
+        // Observación
+        tbody.querySelectorAll('.bov-observacion').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const idx = parseInt(inp.dataset.idx);
+                STATE.bovinos[idx].observacion = inp.value;
             });
         });
     }
@@ -517,7 +529,7 @@
                 kg_peso_vivo: b.kg_peso_vivo,
                 kg_peso_gancho: b.kg_peso_gancho,
                 subtotal: b.subtotal,
-                observacion: null,
+                observacion: b.observacion || null,
             })),
             pagos: STATE.pagos.map(p => ({
                 tipo_pago: p.tipo_pago,
