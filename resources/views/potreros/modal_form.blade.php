@@ -35,7 +35,7 @@
                         <select class="form-select" id="tipo_pasto" name="tipo_pasto" required>
                             <option value="" disabled selected>Seleccione un tipo de pasto</option>
                             <option value="Pasto natural">Pasto natural</option>
-                            <option value="Pasto cultivado">Pasto cultivado</option>
+                            <option value="Pasto sembrado">Pasto sembrado</option>
                             <option value="Mezcla de pastos">Mezcla de pastos</option>
                         </select>
                     </div>
@@ -73,6 +73,7 @@
                         <label for="capacidad_carga_actual" class="form-label">Capacidad de carga actual (ua) <span
                                 class="text-danger">*</span></label>
                         <input type="number" step="0.01" class="form-control" id="capacidad_carga_actual" name="capacidad_carga_actual" required>
+                        <div class="form-text">↑ Modificar este parámetro en un potrero existente generará un registro histórico de la capacidad de carga.</div>
                     </div>
                 </form>
             </div>
