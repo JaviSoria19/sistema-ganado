@@ -158,6 +158,18 @@ class VentaController extends Controller
             }
         }
 
+        // Validar que la suma total de los pagos no exceda el total de la venta
+        $totalPagos = array_reduce($request->pagos ?? [], function ($sum, $pago) {
+            return $sum + (is_numeric($pago['monto']) ? $pago['monto'] : 0);
+        }, 0);
+
+        if ($totalPagos > $request->total) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La suma total de los pagos excede el total de la venta.'
+            ], 400);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -228,6 +240,17 @@ class VentaController extends Controller
             'pagos'       => 'nullable|array'
         ]);
 
+        // Validar que la suma total de los pagos no exceda el total de la venta
+        $totalPagos = array_reduce($request->pagos ?? [], function ($sum, $pago) {
+            return $sum + (is_numeric($pago['monto']) ? $pago['monto'] : 0);
+        }, 0);
+
+        if ($totalPagos > $request->total) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La suma total de los pagos excede el total de la venta.'
+            ], 400);
+        }
 
         DB::beginTransaction();
         try {
