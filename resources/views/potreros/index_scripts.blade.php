@@ -40,6 +40,12 @@
                     data: "capacidad_carga_actual",
                 },
                 {
+                    data: "capacidades_historicas_count",
+                },
+                {
+                    data: "bovinos_count",
+                },
+                {
                     data: "estado",
                     render: function(data, type, row) {
                         if (data == 'activo') {

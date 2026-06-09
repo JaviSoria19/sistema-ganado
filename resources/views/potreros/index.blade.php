@@ -28,6 +28,8 @@
                 <th>Estado del potrero</th>
                 <th>Disponibilidad de agua</th>
                 <th>Capacidad de carga actual (ua)</th>
+                <th>Capacidades históricas registradas</th>
+                <th>Cantidad de bovinos</th>
 
                 <th>Estado</th>
                 <th>F. Registro</th>

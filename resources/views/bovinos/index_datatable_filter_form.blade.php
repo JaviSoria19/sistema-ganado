@@ -34,7 +34,7 @@
         <label for="busqueda-estado" class="form-label">Estado</label>
         <select id="busqueda-estado" name="estado" class="form-select">
             <option value="">Todos</option>
-            <option value="activo">Activo</option>
+            <option value="activo" selected>Activo</option>
             <option value="inactivo">Inactivo</option>
             <option value="vendido">Vendido</option>
         </select>

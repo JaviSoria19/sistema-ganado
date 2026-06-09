@@ -30,7 +30,7 @@
                 kg_peso_vivo: parseFloat(b.pivot.kg_peso_vivo),
                 kg_peso_gancho: parseFloat(b.pivot.kg_peso_gancho),
                 subtotal: parseFloat(b.pivot.subtotal),
-                observacion: b.pivot.observacion
+                observacion: b.pivot.observacion || '',
             };
         }),
         pagos: VENTA_ACTUAL.pagos.map(p => ({
