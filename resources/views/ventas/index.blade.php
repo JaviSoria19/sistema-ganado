@@ -27,6 +27,8 @@
                 <th>#</th>
                 <th>Fecha de venta</th>
                 <th>Cliente</th>
+                <th>Concepto</th>
+                <th>Tipo de precio</th>
                 <th>Bovinos</th>
                 <th>Total</th>
                 <th>Pagos</th>

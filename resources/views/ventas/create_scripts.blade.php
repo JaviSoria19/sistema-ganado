@@ -13,8 +13,13 @@
         bovinos: [], // filas en la tabla de venta
         pagos: [], // { tipo_pago, monto, fecha_pago }
         clientes: [],
-        listaBovinosActivos: [], // todos los bovinos activos cargados una vez
+        listaBovinosActivos: [], // cargados una vez al inicio
         clienteSeleccionado: null,
+        // Campos de nivel venta
+        tipo_precio: 'precio_fijo', // 'precio_fijo' | 'precio_kg'
+        destare: 0,
+        rendimiento: 0,
+        precio_kg: 0,
     };
 
     const TIPOS_PAGO = ['Efectivo', 'Depósito bancario', 'Transferencia QR', 'Cheque', 'Otro'];
@@ -33,10 +38,9 @@
             warning: 'warning',
             info: 'info'
         };
-        const icon = iconMap[type] || 'info';
         Swal.fire({
             theme: localStorage.getItem('theme') || 'dark',
-            icon,
+            icon: iconMap[type] || 'info',
             html: msg,
             toast: true,
             position: 'top-end',
@@ -47,6 +51,91 @@
                 popup: 'shadow-sm'
             }
         });
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       TIPO DE PRECIO GLOBAL
+       Cuando cambia, re-renderiza thead y todos los bovinos
+    ═══════════════════════════════════════════════════════ */
+    document.getElementById('select-tipo-precio').addEventListener('change', function() {
+        STATE.tipo_precio = this.value;
+        const esPorKg = STATE.tipo_precio === 'precio_kg';
+
+        document.querySelectorAll('.campo-precio-kg').forEach(el => {
+            el.classList.toggle('d-none', !esPorKg);
+        });
+
+        // Reinicia campos de precio en todos los bovinos al cambiar tipo
+        STATE.bovinos.forEach(bov => {
+            bov.kg_peso_gancho = 0;
+            bov.subtotal = 0;
+        });
+
+        recalcularTodosLosGanchos();
+        renderThead();
+        renderBovinos();
+        recalcularTotales();
+    });
+
+    document.getElementById('input-destare').addEventListener('input', function() {
+        STATE.destare = parseFloat(this.value) || 0;
+        recalcularTodosLosGanchos();
+        recalcularTotales();
+    });
+
+    document.getElementById('input-rendimiento').addEventListener('input', function() {
+        STATE.rendimiento = parseFloat(this.value) || 0;
+        recalcularTodosLosGanchos();
+        recalcularTotales();
+    });
+
+    document.getElementById('input-precio-kg').addEventListener('input', function() {
+        STATE.precio_kg = parseFloat(this.value) || 0;
+        recalcularTodosLosGanchos();
+        recalcularTotales();
+    });
+
+    // Recalcula gancho y subtotal de todos los bovinos con los valores globales actuales
+    function recalcularTodosLosGanchos() {
+        if (STATE.tipo_precio !== 'precio_kg') return;
+        STATE.bovinos.forEach(bov => {
+            bov.kg_peso_gancho = (bov.kg_peso_vivo - bov.kg_peso_vivo * STATE.destare / 100) * STATE
+                .rendimiento / 100;
+            bov.subtotal = STATE.precio_kg * bov.kg_peso_gancho;
+        });
+        // Actualiza solo las celdas calculadas sin re-renderizar toda la tabla
+        const tbody = document.getElementById('bovinos-tbody');
+        STATE.bovinos.forEach((bov, idx) => {
+            const tr = tbody.querySelector(`tr[data-idx="${idx}"]`);
+            if (!tr) return;
+            const tdGancho = tr.querySelector('.bov-kg-gancho');
+            const tdSub = tr.querySelector('.bov-subtotal');
+            if (tdGancho) tdGancho.textContent = fmtNum(bov.kg_peso_gancho);
+            if (tdSub) tdSub.textContent = fmt(bov.subtotal);
+        });
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       THEAD DINÁMICO
+    ═══════════════════════════════════════════════════════ */
+    function renderThead() {
+        const esPorKg = STATE.tipo_precio === 'precio_kg';
+        const thead = document.getElementById('bovinos-thead');
+        thead.innerHTML = `
+            <tr>
+                <th class="text-center" style="width:32px">#</th>
+                <th>Identificador</th>
+                <th>Potrero</th>
+                <th class="text-center">Peso actual kg</th>
+                ${esPorKg ? `
+                <th class="text-center">Kg vivo (editable)</th>
+                <th class="text-center">Kg Gancho</th>
+                ` : ''}
+                <th class="text-center">${esPorKg ? 'Subtotal' : 'Subtotal (Bs.)'}</th>
+                <th>Observaciones</th>
+                <th style="width:40px"></th>
+            </tr>
+        `;
     }
 
     /* ═══════════════════════════════════════════════════════
@@ -61,9 +150,7 @@
             const peso = b.peso_actual ? `${b.peso_actual} kg` : '';
             const genero = b.genero === 'macho' ? 'Macho' : 'Hembra';
             html +=
-                `<option value="${b.id_bovino}" ${sel}>
-                    C: ${carimbo} ${b.identificador} - ${genero} - ${peso} (${b.color_actual}) ${potrero}
-                </option>`;
+                `<option value="${b.id_bovino}" ${sel}>C: ${carimbo} ${b.identificador} - ${genero} - ${peso} (${b.color_actual}) ${potrero}</option>`;
         });
         return html;
     }
@@ -83,6 +170,10 @@
         const idsEnTabla = STATE.bovinos.map(b => b.id_bovino);
         const disponibles = STATE.listaBovinosActivos.filter(b => !idsEnTabla.includes(b.id_bovino));
         document.getElementById('select-bovino').innerHTML = buildBovinoOptions(disponibles);
+        // Refresh select2 si está inicializado
+        if (typeof $ !== 'undefined') {
+            $('#select-bovino').trigger('change.select2');
+        }
     }
 
     /* ═══════════════════════════════════════════════════════
@@ -104,7 +195,7 @@
             });
             if (valorActual) {
                 sel.value = valorActual;
-                sel.dispatchEvent(new Event('change'));
+                $('#select-cliente').trigger('change');
             }
         } catch (e) {
             console.error('Error cargando clientes', e);
@@ -113,20 +204,13 @@
 
     $('#select-cliente').on('change', function() {
         const id = parseInt(this.value);
-
-        const cliente = STATE.clientes.find(
-            c => c.id_cliente == id
-        ) ?? null;
-
+        const cliente = STATE.clientes.find(c => c.id_cliente == id) ?? null;
         STATE.clienteSeleccionado = cliente;
-
         const info = document.getElementById('cliente-info');
         const btnEdit = document.getElementById('btn-editar-cliente');
-
         if (cliente) {
             document.getElementById('cliente-celular').textContent = cliente.celular;
             document.getElementById('cliente-estancia').textContent = cliente.estancia;
-
             info.classList.remove('d-none');
             btnEdit.disabled = false;
         } else {
@@ -179,7 +263,9 @@
         }
 
         const isEdit = editId !== '';
-        const url = isEdit ? `{{ route('clientes.update', ':id') }}`.replace(':id', editId) : "{{ route('clientes.create') }}";
+        const url = isEdit ?
+            "{{ route('clientes.update', ':id') }}".replace(':id', editId) :
+            "{{ route('clientes.create') }}";
         const method = isEdit ? 'PUT' : 'POST';
 
         try {
@@ -222,21 +308,24 @@
         const b = STATE.listaBovinosActivos.find(x => x.id_bovino === idBovino);
         if (!b) return;
 
+        const kgPesoVivo = parseFloat(b.peso_actual);
+        const kgPesoGancho = STATE.tipo_precio === 'precio_kg' ?
+            (kgPesoVivo - kgPesoVivo * STATE.destare / 100) * STATE.rendimiento / 100 :
+            0;
+        const subtotal = STATE.tipo_precio === 'precio_kg' ?
+            STATE.precio_kg * kgPesoGancho :
+            0;
+
         STATE.bovinos.push({
             id_bovino: b.id_bovino,
             identificador: b.identificador,
             genero: b.genero,
             potrero: b.potrero?.nombre ?? '—',
             carimbo: new Date(b.fecha_nacimiento).getFullYear(),
-            peso_actual: parseFloat(b.peso_actual),
-            tipo_precio: 'fijo',
-            precio_fijo: 0,
-            precio_kg: 0,
-            destare: 0,
-            rendimiento: 0,
-            kg_peso_vivo: parseFloat(b.peso_actual),
-            kg_peso_gancho: 0,
-            subtotal: 0,
+            peso_actual: kgPesoVivo,
+            kg_peso_vivo: kgPesoVivo, // editable si precio_kg
+            kg_peso_gancho: kgPesoGancho,
+            subtotal,
             observacion: '',
         });
 
@@ -251,112 +340,94 @@
     ═══════════════════════════════════════════════════════ */
     function renderBovinos() {
         const tbody = document.getElementById('bovinos-tbody');
+        const esPorKg = STATE.tipo_precio === 'precio_kg';
         tbody.innerHTML = '';
 
         if (!STATE.bovinos.length) {
+            const cols = esPorKg ? 9 : 7;
             tbody.innerHTML = `
-            <tr id="bovinos-empty">
-                <td colspan="12" class="text-center text-muted py-3 small">
-                    <i class="fa-solid fa-cow me-1 opacity-50"></i>Aún no se han agregado bovinos
-                </td>
-            </tr>`;
+                <tr id="bovinos-empty">
+                    <td colspan="${cols}" class="text-center text-muted py-3 small">
+                        <i class="fa-solid fa-cow me-1 opacity-50"></i>Aún no se han agregado bovinos
+                    </td>
+                </tr>`;
             return;
         }
 
         STATE.bovinos.forEach((bov, idx) => {
-            const esFijo = bov.tipo_precio === 'fijo';
             const tr = document.createElement('tr');
             tr.dataset.idx = idx;
 
             tr.innerHTML = `
-            <td class="text-center text-muted small">${idx + 1}</td>
-            <td class="small">
-                <div class="fw-semibold">${bov.identificador}</div>
-                <div class="text-muted" style="font-size:0.73rem">C:${bov.carimbo} &middot; ${bov.genero === 'macho' ? 'Macho' : 'Hembra'}</div>
-            </td>
-            <td class="small text-muted">${bov.potrero}</td>
-            <td class="text-center small fw-semibold">${fmtNum(bov.peso_actual)}</td>
-            <td class="text-center">
-                <select class="form-select form-select-sm bov-tipo-precio" data-idx="${idx}">
-                    <option value="fijo"  ${esFijo  ? 'selected' : ''}>Precio fijo</option>
-                    <option value="kg"    ${!esFijo ? 'selected' : ''}>Por kg</option>
-                </select>
-            </td>
-            <td class="text-center">
-                ${esFijo
-                    ? `<input type="number" class="form-control form-control-sm bov-precio-fijo" data-idx="${idx}" value="${bov.precio_fijo}" min="0" step="0.01" placeholder="Bs." style="width:90px">`
-                    : `<input type="number" class="form-control form-control-sm bov-precio-kg"   data-idx="${idx}" value="${bov.precio_kg}"   min="0" step="0.01" placeholder="Bs./kg" style="width:90px">`
-                }
-            </td>
-            <td class="text-center">
-                ${esFijo
-                    ? `<span class="text-muted">—</span>`
-                    : `<input type="number" class="form-control form-control-sm bov-destare" data-idx="${idx}" value="${bov.destare}" min="0" max="100" step="0.1" placeholder="%" style="width:70px">`
-                }
-            </td>
-            <td class="text-center">
-                ${esFijo
-                    ? `<span class="text-muted">—</span>`
-                    : `<input type="number" class="form-control form-control-sm bov-rendimiento" data-idx="${idx}" value="${bov.rendimiento}" min="0" max="100" step="0.1" placeholder="%" style="width:70px">`
-                }
-            </td>
-            <td class="text-center small text-muted bov-kg-gancho">${esFijo ? '—' : fmtNum(bov.kg_peso_gancho)}</td>
-            <td class="text-center small fw-bold text-info bov-subtotal">${fmt(bov.subtotal)}</td>
-            <td class="small">
-                <input type="text" class="form-control form-control-sm bov-observacion" data-idx="${idx}" value="${bov.observacion}" placeholder="Ej. Cicatriz" maxlength="255">
-            </td>
-            <td class="text-center">
-                <button class="btn btn-sm btn-outline-danger bov-btn-quitar" data-idx="${idx}" title="Quitar">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </td>
-        `;
+                <td class="text-center text-muted small">${idx + 1}</td>
+                <td class="small">
+                    <div class="fw-semibold">${bov.identificador}</div>
+                    <div class="text-muted" style="font-size:0.73rem">C:${bov.carimbo} &middot; ${bov.genero === 'macho' ? 'Macho' : 'Hembra'}</div>
+                </td>
+                <td class="small text-muted">${bov.potrero}</td>
+                <td class="text-center small fw-semibold">${fmtNum(bov.peso_actual)}</td>
+                ${esPorKg ? `
+                <td class="text-center">
+                    <input type="number" class="form-control form-control-sm bov-kg-vivo" data-idx="${idx}"
+                        value="${fmtNum(bov.kg_peso_vivo)}" min="0" step="0.01" style="width:90px">
+                </td>
+                <td class="text-center small text-muted bov-kg-gancho">${fmtNum(bov.kg_peso_gancho)}</td>
+                ` : ''}
+                <td class="text-center small fw-bold text-info bov-subtotal">
+                    ${esPorKg
+                        ? fmt(bov.subtotal)
+                        : `<input type="number" class="form-control form-control-sm bov-subtotal-input" data-idx="${idx}"
+                               value="${fmtNum(bov.subtotal)}" min="0" step="0.01" style="width:110px">`
+                    }
+                </td>
+                <td class="small">
+                    <input type="text" class="form-control form-control-sm bov-observacion" data-idx="${idx}"
+                        value="${bov.observacion}" placeholder="Ej. Cicatriz" maxlength="150">
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-danger bov-btn-quitar" data-idx="${idx}" title="Quitar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
 
-        // Cambio tipo precio
-        tbody.querySelectorAll('.bov-tipo-precio').forEach(sel => {
-            sel.addEventListener('change', () => {
-                const idx = parseInt(sel.dataset.idx);
-                Object.assign(STATE.bovinos[idx], {
-                    tipo_precio: sel.value,
-                    precio_fijo: 0,
-                    precio_kg: 0,
-                    destare: 0,
-                    rendimiento: 0,
-                    kg_peso_gancho: 0,
-                    subtotal: 0,
-                });
-                renderBovinos();
-                recalcularTotales();
-            });
-        });
+        /* ── Eventos ── */
 
-        // Precio fijo
-        tbody.querySelectorAll('.bov-precio-fijo').forEach(inp => {
-            inp.addEventListener('input', () => {
-                const idx = parseInt(inp.dataset.idx);
-                STATE.bovinos[idx].precio_fijo = parseFloat(inp.value) || 0;
-                STATE.bovinos[idx].subtotal = STATE.bovinos[idx].precio_fijo;
-                actualizarFilaSubtotal(tbody, idx);
-                recalcularTotales();
-            });
-        });
-
-        // Precio por kg / destare / rendimiento
-        tbody.querySelectorAll('.bov-precio-kg, .bov-destare, .bov-rendimiento').forEach(inp => {
+        // Kg vivo editable (solo precio_kg): recalcula gancho y subtotal de esa fila
+        tbody.querySelectorAll('.bov-kg-vivo').forEach(inp => {
             inp.addEventListener('input', () => {
                 const idx = parseInt(inp.dataset.idx);
                 const bov = STATE.bovinos[idx];
-                if (inp.classList.contains('bov-precio-kg')) bov.precio_kg = parseFloat(inp.value) || 0;
-                if (inp.classList.contains('bov-destare')) bov.destare = parseFloat(inp.value) || 0;
-                if (inp.classList.contains('bov-rendimiento')) bov.rendimiento = parseFloat(inp
-                    .value) || 0;
-                bov.kg_peso_gancho = (bov.kg_peso_vivo - bov.kg_peso_vivo * bov.destare / 100) * bov
+                bov.kg_peso_vivo = parseFloat(inp.value) || 0;
+                bov.kg_peso_gancho = (bov.kg_peso_vivo - bov.kg_peso_vivo * STATE.destare / 100) * STATE
                     .rendimiento / 100;
-                bov.subtotal = bov.precio_kg * bov.kg_peso_gancho;
-                actualizarFilaSubtotal(tbody, idx);
+                bov.subtotal = STATE.precio_kg * bov.kg_peso_gancho;
+                const tr = tbody.querySelector(`tr[data-idx="${idx}"]`);
+                if (tr) {
+                    const tdGancho = tr.querySelector('.bov-kg-gancho');
+                    const tdSub = tr.querySelector('.bov-subtotal');
+                    if (tdGancho) tdGancho.textContent = fmtNum(bov.kg_peso_gancho);
+                    if (tdSub) tdSub.textContent = fmt(bov.subtotal);
+                }
                 recalcularTotales();
+            });
+        });
+
+        // Subtotal editable directo (solo precio_fijo)
+        tbody.querySelectorAll('.bov-subtotal-input').forEach(inp => {
+            inp.addEventListener('input', () => {
+                const idx = parseInt(inp.dataset.idx);
+                STATE.bovinos[idx].subtotal = parseFloat(inp.value) || 0;
+                recalcularTotales();
+            });
+        });
+
+        // Observación
+        tbody.querySelectorAll('.bov-observacion').forEach(inp => {
+            inp.addEventListener('input', () => {
+                STATE.bovinos[parseInt(inp.dataset.idx)].observacion = inp.value;
             });
         });
 
@@ -369,24 +440,6 @@
                 recalcularTotales();
             });
         });
-
-        // Observación
-        tbody.querySelectorAll('.bov-observacion').forEach(inp => {
-            inp.addEventListener('input', () => {
-                const idx = parseInt(inp.dataset.idx);
-                STATE.bovinos[idx].observacion = inp.value;
-            });
-        });
-    }
-
-    function actualizarFilaSubtotal(tbody, idx) {
-        const tr = tbody.querySelector(`tr[data-idx="${idx}"]`);
-        if (!tr) return;
-        const bov = STATE.bovinos[idx];
-        const tdGancho = tr.querySelector('.bov-kg-gancho');
-        const tdSub = tr.querySelector('.bov-subtotal');
-        if (tdGancho && bov.tipo_precio === 'kg') tdGancho.textContent = fmtNum(bov.kg_peso_gancho);
-        if (tdSub) tdSub.textContent = fmt(bov.subtotal);
     }
 
     /* ═══════════════════════════════════════════════════════
@@ -408,9 +461,9 @@
 
         if (!STATE.pagos.length) {
             cont.innerHTML = `
-            <p id="pagos-empty" class="text-center text-muted small py-2 mb-0">
-                <i class="fa-regular fa-credit-card me-1 opacity-50"></i>Sin pagos registrados
-            </p>`;
+                <p id="pagos-empty" class="text-center text-muted small py-2 mb-0">
+                    <i class="fa-regular fa-credit-card me-1 opacity-50"></i>Sin pagos registrados
+                </p>`;
             return;
         }
 
@@ -418,25 +471,25 @@
             const row = document.createElement('div');
             row.className = 'row g-2 align-items-center mb-2';
             row.innerHTML = `
-            <div class="col-sm-4">
-                <select class="form-select form-select-sm pago-tipo" data-idx="${idx}">
-                    ${TIPOS_PAGO.map(t => `<option value="${t}" ${pago.tipo_pago === t ? 'selected' : ''}>${t}</option>`).join('')}
-                </select>
-            </div>
-            <div class="col-sm-3">
-                <input type="number" class="form-control form-control-sm pago-monto" data-idx="${idx}"
-                    value="${pago.monto}" min="0" step="0.01" placeholder="Monto">
-            </div>
-            <div class="col-sm-4">
-                <input type="date" class="form-control form-control-sm pago-fecha" data-idx="${idx}"
-                    value="${pago.fecha_pago}">
-            </div>
-            <div class="col-sm-1 text-end">
-                <button class="btn btn-sm btn-outline-danger pago-btn-quitar" data-idx="${idx}" title="Quitar">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        `;
+                <div class="col-sm-4">
+                    <select class="form-select form-select-sm pago-tipo" data-idx="${idx}">
+                        ${TIPOS_PAGO.map(t => `<option value="${t}" ${pago.tipo_pago === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-sm-3">
+                    <input type="number" class="form-control form-control-sm pago-monto" data-idx="${idx}"
+                        value="${pago.monto}" min="0" step="0.01" placeholder="Monto">
+                </div>
+                <div class="col-sm-4">
+                    <input type="date" class="form-control form-control-sm pago-fecha" data-idx="${idx}"
+                        value="${pago.fecha_pago}">
+                </div>
+                <div class="col-sm-1 text-end">
+                    <button class="btn btn-sm btn-outline-danger pago-btn-quitar" data-idx="${idx}" title="Quitar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `;
             cont.appendChild(row);
         });
 
@@ -484,10 +537,16 @@
     ═══════════════════════════════════════════════════════ */
     document.getElementById('btn-guardar-venta').addEventListener('click', async () => {
         const idCliente = document.getElementById('select-cliente').value;
+        const concepto = document.getElementById('input-concepto').value.trim();
         const fechaVenta = document.getElementById('fecha-venta').value;
+        const esPorKg = STATE.tipo_precio === 'precio_kg';
 
         if (!idCliente) {
             showAlert('Selecciona un cliente para continuar.');
+            return;
+        }
+        if (!concepto) {
+            showAlert('Ingresa el concepto de la venta.');
             return;
         }
         if (!fechaVenta) {
@@ -499,17 +558,15 @@
             return;
         }
 
+        if (esPorKg && STATE.precio_kg <= 0) {
+            showAlert('Ingresa el precio por kg antes de registrar la venta.');
+            return;
+        }
+
         for (const b of STATE.bovinos) {
-            if (b.tipo_precio === 'fijo' && b.precio_fijo <= 0) {
+            if (!esPorKg && b.subtotal <= 0) {
                 showAlert(
-                    `El bovino <b>${b.identificador}</b> tiene precio fijo en 0. Ingresa un valor válido.`
-                );
-                return;
-            }
-            if (b.tipo_precio === 'kg' && b.precio_kg <= 0) {
-                showAlert(
-                    `El bovino <b>${b.identificador}</b> tiene precio/kg en 0. Ingresa un valor válido.`
-                );
+                    `El bovino <b>${b.identificador}</b> tiene subtotal en 0. Ingresa un valor válido.`);
                 return;
             }
         }
@@ -518,16 +575,17 @@
 
         const payload = {
             id_cliente: parseInt(idCliente),
+            concepto,
+            tipo_precio: STATE.tipo_precio,
+            destare: esPorKg ? STATE.destare : 0,
+            rendimiento: esPorKg ? STATE.rendimiento : 0,
+            precio_kg: esPorKg ? STATE.precio_kg : 0,
             fecha_venta: fechaVenta,
             total,
             bovinos: STATE.bovinos.map(b => ({
                 id_bovino: b.id_bovino,
-                precio_fijo: b.tipo_precio === 'fijo' ? b.precio_fijo : 0,
-                precio_kg: b.tipo_precio === 'kg' ? b.precio_kg : 0,
-                destare: b.destare,
-                rendimiento: b.rendimiento,
-                kg_peso_vivo: b.kg_peso_vivo,
-                kg_peso_gancho: b.kg_peso_gancho,
+                kg_peso_vivo: esPorKg ? b.kg_peso_vivo : 0,
+                kg_peso_gancho: esPorKg ? b.kg_peso_gancho : 0,
                 subtotal: b.subtotal,
                 observacion: b.observacion || null,
             })),
@@ -554,12 +612,11 @@
             const data = await r.json();
             if (data.success) {
                 showAlert(data.message ?? 'Venta registrada correctamente.', 'success');
-                window.open("{{ route('ventas.imprimir', ':id') }}".replace(':id',
-                            data.venta.id_venta), '_blank',
-                        'noopener,noreferrer');
-                setTimeout(() => 
-                window.location.href = "{{ route('ventas.index') }}", 1200
+                window.open(
+                    "{{ route('ventas.imprimir', ':id') }}".replace(':id', data.venta.id_venta),
+                    '_blank', 'noopener,noreferrer'
                 );
+                setTimeout(() => window.location.href = "{{ route('ventas.index') }}", 1200);
             } else {
                 showAlert(data.message ?? 'Error al registrar la venta.');
                 btn.disabled = false;
@@ -578,6 +635,7 @@
     (async () => {
         await cargarBovinos();
         await cargarClientes();
+        renderThead();
         recalcularTotales();
     })();
 </script>

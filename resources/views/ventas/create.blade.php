@@ -11,17 +11,19 @@
             {{-- ════ COLUMNA PRINCIPAL ════ --}}
             <div class="col-lg-12">
 
-                {{-- ── CLIENTE ── --}}
+                {{-- ── CLIENTE + DATOS GENERALES ── --}}
                 <div class="card border-secondary mb-3">
                     <div class="card-header py-2">
                         <span class="text-info fw-semibold small text-uppercase">
-                            <i class="fa-solid fa-user me-1"></i>Cliente
+                            <i class="fa-solid fa-user me-1"></i>Datos de la venta
                         </span>
                     </div>
                     <div class="card-body">
                         <div class="row g-2 align-items-end">
-                            <div class="col-sm-5">
-                                <label class="form-label form-label-sm">Seleccionar cliente</label>
+
+                            {{-- Cliente --}}
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">Cliente</label>
                                 <div class="input-group input-group-sm">
                                     <select id="select-cliente" class="form-select form-select-sm select2">
                                         <option value="">— Elige un cliente —</option>
@@ -32,22 +34,78 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="col-sm-3">
+
+                            {{-- Concepto --}}
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">Concepto</label>
+                                <input type="text" id="input-concepto" class="form-control form-control-sm"
+                                    placeholder="Ej. Venta de novillos 2024" maxlength="150">
+                            </div>
+
+                            {{-- Fecha --}}
+                            <div class="col-sm-2">
                                 <label class="form-label form-label-sm">Fecha de venta</label>
                                 <input type="date" id="fecha-venta" class="form-control form-control-sm"
                                     value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-sm-4">
+
+                            {{-- Nuevo cliente --}}
+                            <div class="col-sm-2">
                                 <button type="button" class="btn btn-outline-success btn-sm w-100" id="btn-nuevo-cliente">
                                     <i class="fa-solid fa-plus me-1"></i>Nuevo cliente
                                 </button>
                             </div>
+
                         </div>
+
+                        {{-- Info cliente --}}
                         <div id="cliente-info" class="mt-2 d-none small text-muted">
                             <i class="fa-solid fa-phone me-1"></i><span id="cliente-celular"></span>
                             <span class="mx-2">·</span>
                             <i class="fa-solid fa-location-dot me-1"></i><span id="cliente-estancia"></span>
                         </div>
+
+                        <hr class="my-3">
+
+                        {{-- Tipo de precio global --}}
+                        <div class="row g-2 align-items-end">
+                            <div class="col-sm-3">
+                                <label class="form-label form-label-sm fw-semibold">Tipo de precio</label>
+                                <select id="select-tipo-precio" class="form-select form-select-sm">
+                                    <option value="precio_fijo">Precio fijo por bovino</option>
+                                    <option value="precio_kg">Precio por kg</option>
+                                </select>
+                            </div>
+                            {{-- Destare y rendimiento: solo visibles si precio_kg --}}
+                            <div class="col-sm-2 campo-precio-kg d-none">
+                                <label class="form-label form-label-sm">Destare %
+                                    <i class="fa-solid fa-circle-info text-muted ms-1"
+                                        title="Porcentaje de descuento por vísceras y cuero"></i>
+                                </label>
+                                <input type="number" id="input-destare" class="form-control form-control-sm" value="0"
+                                    min="0" max="100" step="0.1" placeholder="%">
+                            </div>
+                            <div class="col-sm-2 campo-precio-kg d-none">
+                                <label class="form-label form-label-sm">Rendimiento %
+                                    <i class="fa-solid fa-circle-info text-muted ms-1"
+                                        title="Porcentaje de carne aprovechable sobre el peso gancho"></i>
+                                </label>
+                                <input type="number" id="input-rendimiento" class="form-control form-control-sm"
+                                    value="0" min="0" max="100" step="0.1" placeholder="%">
+                            </div>
+                            <div class="col-sm-2 campo-precio-kg d-none">
+                                <label class="form-label form-label-sm">Precio por kg (Bs.)</label>
+                                <input type="number" id="input-precio-kg" class="form-control form-control-sm"
+                                    value="0" min="0" step="0.01" placeholder="Bs./kg">
+                            </div>
+                            <div class="col-sm-3 campo-precio-kg d-none">
+                                <p class="mb-0 small text-muted mt-1">
+                                    <i class="fa-solid fa-calculator me-1"></i>
+                                    Kg gancho = (Kg vivo &minus; Kg vivo &times; destare%) &times; rendimiento%
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -74,26 +132,13 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th class="text-center" style="width:32px">#</th>
-                                        <th>Identificador</th>
-                                        <th>Potrero</th>
-                                        <th class="text-center">Peso kg</th>
-                                        <th class="text-center">Tipo precio</th>
-                                        <th class="text-center">Precio</th>
-                                        <th class="text-center">Destare %</th>
-                                        <th class="text-center">Rend. %</th>
-                                        <th class="text-center">Kg Gancho</th>
-                                        <th class="text-center">Subtotal</th>
-                                        <th>Observaciones</th>
-                                        <th style="width:40px">Acciones</th>
-                                    </tr>
+                            <table class="table table-sm table-bordered align-middle mb-0" id="tabla-bovinos">
+                                <thead class="table-dark" id="bovinos-thead">
+                                    {{-- Las columnas se renderizan dinámicamente según tipo_precio --}}
                                 </thead>
                                 <tbody id="bovinos-tbody">
                                     <tr id="bovinos-empty">
-                                        <td colspan="12" class="text-center text-muted py-3 small">
+                                        <td colspan="10" class="text-center text-muted py-3 small">
                                             <i class="fa-solid fa-cow me-1 opacity-50"></i>
                                             Aún no se han agregado bovinos
                                         </td>
@@ -122,8 +167,6 @@
                 </div>
 
             </div>{{-- /col principal --}}
-
-
 
         </div>{{-- /row --}}
 

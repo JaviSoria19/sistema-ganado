@@ -44,7 +44,7 @@ class Bovino extends Model
             'ventas_detalles',   // Tabla pivote
             'id_bovino',         // FK en la tabla pivote hacia bovinos
             'id_venta'           // FK en la tabla pivote hacia ventas
-        )->withPivot('precio_fijo', 'precio_kg', 'destare', 'rendimiento', 'kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
+        )->withPivot('kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
     }
 
     public function recuentos_historicos()

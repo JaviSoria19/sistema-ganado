@@ -7,21 +7,21 @@
         </h1>
 
         <div class="row g-3">
-
-            {{-- ════ COLUMNA PRINCIPAL ════ --}}
             <div class="col-lg-12">
 
-                {{-- ── CLIENTE ── --}}
+                {{-- ── DATOS DE LA VENTA ── --}}
                 <div class="card border-secondary mb-3">
                     <div class="card-header py-2">
                         <span class="text-info fw-semibold small text-uppercase">
-                            <i class="fa-solid fa-user me-1"></i>Cliente
+                            <i class="fa-solid fa-user me-1"></i>Datos de la venta
                         </span>
                     </div>
                     <div class="card-body">
                         <div class="row g-2 align-items-end">
-                            <div class="col-sm-5">
-                                <label class="form-label form-label-sm">Seleccionar cliente</label>
+
+                            {{-- Cliente --}}
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">Cliente</label>
                                 <div class="input-group input-group-sm">
                                     <select id="select-cliente" class="form-select form-select-sm select2">
                                         <option value="">— Elige un cliente —</option>
@@ -32,22 +32,82 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="col-sm-3">
+
+                            {{-- Concepto --}}
+                            <div class="col-sm-4">
+                                <label class="form-label form-label-sm">Concepto</label>
+                                <input type="text" id="input-concepto" class="form-control form-control-sm"
+                                    placeholder="Ej. Venta de novillos 2024" maxlength="150" value="{{ $venta->concepto }}">
+                            </div>
+
+                            {{-- Fecha --}}
+                            <div class="col-sm-2">
                                 <label class="form-label form-label-sm">Fecha de venta</label>
                                 <input type="date" id="fecha-venta" class="form-control form-control-sm"
                                     value="{{ \Carbon\Carbon::parse($venta->fecha_venta)->format('Y-m-d') }}">
                             </div>
-                            <div class="col-sm-4">
+
+                            {{-- Nuevo cliente --}}
+                            <div class="col-sm-2">
                                 <button type="button" class="btn btn-outline-success btn-sm w-100" id="btn-nuevo-cliente">
                                     <i class="fa-solid fa-plus me-1"></i>Nuevo cliente
                                 </button>
                             </div>
+
                         </div>
+
                         <div id="cliente-info" class="mt-2 d-none small text-muted">
                             <i class="fa-solid fa-phone me-1"></i><span id="cliente-celular"></span>
                             <span class="mx-2">·</span>
                             <i class="fa-solid fa-location-dot me-1"></i><span id="cliente-estancia"></span>
                         </div>
+
+                        <hr class="my-3">
+
+                        {{-- Tipo de precio global --}}
+                        <div class="row g-2 align-items-end">
+                            <div class="col-sm-3">
+                                <label class="form-label form-label-sm fw-semibold">Tipo de precio</label>
+                                <select id="select-tipo-precio" class="form-select form-select-sm">
+                                    <option value="precio_fijo"
+                                        {{ $venta->tipo_precio === 'precio_fijo' ? 'selected' : '' }}>Precio fijo por bovino
+                                    </option>
+                                    <option value="precio_kg" {{ $venta->tipo_precio === 'precio_kg' ? 'selected' : '' }}>
+                                        Precio por kg</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-2 campo-precio-kg {{ $venta->tipo_precio !== 'precio_kg' ? 'd-none' : '' }}">
+                                <label class="form-label form-label-sm">Destare %
+                                    <i class="fa-solid fa-circle-info text-muted ms-1"
+                                        title="Porcentaje de descuento por vísceras y cuero"></i>
+                                </label>
+                                <input type="number" id="input-destare" class="form-control form-control-sm"
+                                    value="{{ $venta->destare }}" min="0" max="100" step="0.1"
+                                    placeholder="%">
+                            </div>
+                            <div class="col-sm-2 campo-precio-kg {{ $venta->tipo_precio !== 'precio_kg' ? 'd-none' : '' }}">
+                                <label class="form-label form-label-sm">Rendimiento %
+                                    <i class="fa-solid fa-circle-info text-muted ms-1"
+                                        title="Porcentaje de carne aprovechable sobre el peso gancho"></i>
+                                </label>
+                                <input type="number" id="input-rendimiento" class="form-control form-control-sm"
+                                    value="{{ $venta->rendimiento }}" min="0" max="100" step="0.1"
+                                    placeholder="%">
+                            </div>
+                            <div class="col-sm-2 campo-precio-kg {{ $venta->tipo_precio !== 'precio_kg' ? 'd-none' : '' }}">
+                                <label class="form-label form-label-sm">Precio por kg (Bs.)</label>
+                                <input type="number" id="input-precio-kg" class="form-control form-control-sm"
+                                    value="{{ $venta->precio_kg }}" min="0" step="0.01" placeholder="Bs./kg">
+                            </div>
+                            <div
+                                class="col-sm-3 campo-precio-kg {{ $venta->tipo_precio !== 'precio_kg' ? 'd-none' : '' }}">
+                                <p class="mb-0 small text-muted mt-1">
+                                    <i class="fa-solid fa-calculator me-1"></i>
+                                    Kg gancho = (Kg vivo &minus; Kg vivo &times; destare%) &times; rendimiento%
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -74,25 +134,12 @@
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered align-middle mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th class="text-center" style="width:32px">#</th>
-                                        <th>Identificador</th>
-                                        <th>Potrero</th>
-                                        <th class="text-center">Peso kg</th>
-                                        <th class="text-center">Tipo precio</th>
-                                        <th class="text-center">Precio</th>
-                                        <th class="text-center">Destare %</th>
-                                        <th class="text-center">Rend. %</th>
-                                        <th class="text-center">Kg Gancho</th>
-                                        <th class="text-center">Subtotal</th>
-                                        <th>Observaciones</th>
-                                        <th style="width:40px">Acciones</th>
-                                    </tr>
+                            <table class="table table-sm table-bordered align-middle mb-0" id="tabla-bovinos">
+                                <thead class="table-dark" id="bovinos-thead">
+                                    {{-- Renderizado dinámicamente por JS --}}
                                 </thead>
                                 <tbody id="bovinos-tbody">
-                                    {{-- Se renderiza por JS --}}
+                                    {{-- Renderizado dinámicamente por JS --}}
                                 </tbody>
                             </table>
                         </div>
@@ -110,16 +157,14 @@
                         </button>
                     </div>
                     <div class="card-body" id="pagos-container">
-                        {{-- Se renderiza por JS --}}
+                        {{-- Renderizado dinámicamente por JS --}}
                     </div>
                 </div>
 
-            </div>{{-- /col principal --}}
-
-        </div>{{-- /row --}}
+            </div>
+        </div>
 
         <div class="row g-3">
-            {{-- ════ PANEL RESUMEN Y ACCIONES ════ --}}
             <div class="col-lg-4">
                 <div class="card border-secondary" style="position:sticky;top:1rem">
                     <div class="card-header py-2">
@@ -155,7 +200,7 @@
                             </button>
                             <button type="button" class="btn btn-outline-danger fw-bold" data-bs-toggle="modal"
                                 data-bs-target="#modal-eliminar-venta">
-                                <i class="fa-solid fa-trash-can me-2"></i>Eliminar Venta
+                                <i class="fa-solid fa-trash-can me-2"></i>Eliminar venta
                             </button>
                             <a href="{{ route('ventas.index') }}" class="btn btn-outline-secondary">
                                 <i class="fa-solid fa-arrow-left me-1"></i>Volver
@@ -167,9 +212,7 @@
         </div>
     </div>
 
-    {{-- ════════════════════════════════════════════
-     MODAL CLIENTE (crear / editar)
-    ════════════════════════════════════════════ --}}
+    {{-- ════ MODAL CLIENTE ════ --}}
     <div class="modal fade" id="modal-cliente" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -208,26 +251,25 @@
         </div>
     </div>
 
-    {{-- ════════════════════════════════════════════
-     MODAL ELIMINAR VENTA
-    ════════════════════════════════════════════ --}}
+    {{-- ════ MODAL ELIMINAR VENTA ════ --}}
     <div class="modal fade" id="modal-eliminar-venta" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-danger">
                     <h5 class="modal-title text-danger fw-bold">
-                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Venta
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar venta
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted mb-3">
-                        Estás a punto de eliminar esta venta. Los bovinos involucrados retornarán al sistema con estado
-                        "activo". Esta acción no se puede deshacer.
+                        Estás a punto de eliminar esta venta. Los bovinos involucrados retornarán al sistema
+                        con estado "activo". Esta acción no se puede deshacer.
                     </p>
                     <div class="mb-3">
-                        <label class="form-label form-label-sm fw-semibold">Motivo de la eliminación <span
-                                class="text-danger">*</span></label>
+                        <label class="form-label form-label-sm fw-semibold">
+                            Motivo de la eliminación <span class="text-danger">*</span>
+                        </label>
                         <textarea id="venta-motivo-eliminacion" class="form-control form-control-sm" rows="3"
                             placeholder="Describe brevemente por qué se anula o elimina esta venta..."></textarea>
                     </div>
@@ -235,7 +277,7 @@
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger btn-sm fw-bold" id="btn-confirmar-eliminar">
-                        <i class="fa-solid fa-trash-can me-1"></i>Confirmar Eliminación
+                        <i class="fa-solid fa-trash-can me-1"></i>Confirmar eliminación
                     </button>
                 </div>
             </div>

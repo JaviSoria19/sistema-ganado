@@ -12,6 +12,15 @@
     </div>
 
     <div class="col-md-2">
+        <label for="busqueda-tipo_precio" class="form-label">Tipo de precio</label>
+        <select id="busqueda-tipo_precio" name="tipo_precio" class="form-select">
+            <option value="">Todos</option>
+            <option value="precio_fijo">Precio fijo</option>
+            <option value="precio_kg">Precio por kg</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
         <label for="busqueda-id_cliente" class="form-label">Cliente</label>
         <select id="busqueda-id_cliente" name="id_cliente" class="form-select select2">
             <option value="">Todos</option>

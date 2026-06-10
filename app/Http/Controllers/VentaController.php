@@ -83,6 +83,7 @@ class VentaController extends Controller
             'estado' => $request->estado ?? null,
             'creado_por' => $request->creado_por ?? null,
             'id_cliente' => $request->id_cliente ?? null,
+            'tipo_precio' => $request->tipo_precio ?? null,
         ];
 
         $ventas = (new Venta())->get_all_ventas($filters);
@@ -114,6 +115,7 @@ class VentaController extends Controller
         $request->validate([
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'fecha_venta'   => 'required|date',
+            'concepto' => 'nullable|string|max:150',
             'bovinos'   => 'required|array|min:1',
             'bovinos.*.id_bovino' => 'required|integer|exists:bovinos,id_bovino',
             'pagos'       => 'nullable|array'
@@ -162,10 +164,13 @@ class VentaController extends Controller
             return $sum + (is_numeric($pago['monto']) ? $pago['monto'] : 0);
         }, 0);
 
-        if ($totalPagos > $request->total) {
+        $totalPagos = round($totalPagos, 2);
+        $totalVenta = round($request->total, 2);
+
+        if ($totalPagos > $totalVenta) {
             return response()->json([
                 'success' => false,
-                'message' => 'La suma total de los pagos excede el total de la venta.'
+                'message' => "La suma total de los pagos ({$totalPagos}) excede el total de la venta ({$totalVenta})."
             ], 400);
         }
 
@@ -174,20 +179,22 @@ class VentaController extends Controller
         try {
             $venta = new Venta();
             $venta->id_cliente = $request->id_cliente;
-            $venta->total = $request->total;
+            $venta->concepto = $request->concepto ?? 'Sin concepto';
+            $venta->tipo_precio = $request->tipo_precio;
+            $venta->precio_kg = $request->tipo_precio == 'precio_kg' ? $request->precio_kg : 0;
+            $venta->destare = $request->destare ?? 0;
+            $venta->rendimiento = $request->rendimiento ?? 0;
+            $venta->total = round($request->total, 2);
             $venta->fecha_venta = $request->fecha_venta;
+
             $venta->creado_por = session('id_usuario');
             $venta->save();
 
             foreach ($request->bovinos as $detalle) {
                 $venta->bovinos()->attach($detalle['id_bovino'], [
-                    'precio_fijo' => $detalle['precio_fijo'],
-                    'precio_kg' => $detalle['precio_kg'],
-                    'destare' => $detalle['destare'],
-                    'rendimiento' => $detalle['rendimiento'],
-                    'kg_peso_vivo' => $detalle['kg_peso_vivo'],
-                    'kg_peso_gancho' => $detalle['kg_peso_gancho'],
-                    'subtotal' => $detalle['subtotal'],
+                    'kg_peso_vivo' => round($detalle['kg_peso_vivo'], 2),
+                    'kg_peso_gancho' => round($detalle['kg_peso_gancho'], 2),
+                    'subtotal' => round($detalle['subtotal'], 2),
                     'observacion' => $detalle['observacion'] ?? null,
                 ]);
 
@@ -201,7 +208,7 @@ class VentaController extends Controller
                 foreach ($request->pagos as $pago) {
                     $p = new Pago();
                     $p->id_venta = $venta->id_venta;
-                    $p->monto = $pago['monto'];
+                    $p->monto = round($pago['monto'], 2);
                     $p->tipo_pago = $pago['tipo_pago'];
                     $p->fecha_pago = $pago['fecha_pago'];
                     $p->save();
@@ -234,6 +241,7 @@ class VentaController extends Controller
         $request->validate([
             'id_cliente'   => 'required|integer|exists:clientes,id_cliente',
             'fecha_venta'   => 'required|date',
+            'concepto' => 'string|max:150|nullable',
             'bovinos'   => 'required|array|min:1',
             'bovinos.*.id_bovino' => 'required|integer|exists:bovinos,id_bovino',
             'pagos'       => 'nullable|array'
@@ -244,10 +252,13 @@ class VentaController extends Controller
             return $sum + (is_numeric($pago['monto']) ? $pago['monto'] : 0);
         }, 0);
 
-        if ($totalPagos > $request->total) {
+        $totalVenta = round($request->total, 2);
+        $totalPagos = round($totalPagos, 2);
+
+        if ($totalPagos > $totalVenta) {
             return response()->json([
                 'success' => false,
-                'message' => 'La suma total de los pagos excede el total de la venta.'
+                'message' => "La suma total de los pagos ({$totalPagos}) excede el total de la venta ({$totalVenta})."
             ], 400);
         }
 
@@ -255,8 +266,14 @@ class VentaController extends Controller
         try {
             $venta = (new Venta())->get_venta($id_venta);
             $venta->id_cliente = $request->id_cliente;
-            $venta->total = $request->total;
+            $venta->concepto = $request->concepto ?? 'Sin concepto';
+            $venta->tipo_precio = $request->tipo_precio;
+            $venta->destare = $request->destare ?? 0;
+            $venta->rendimiento = $request->rendimiento ?? 0;
+            $venta->precio_kg = $request->tipo_precio == 'precio_kg' ? $request->precio_kg : 0;
+            $venta->total = round($request->total, 2);
             $venta->fecha_venta = $request->fecha_venta;
+
             $venta->modificado_por = session('id_usuario');
             $venta->save();
 
@@ -282,13 +299,9 @@ class VentaController extends Controller
 
             foreach ($request->bovinos as $detalle) {
                 $venta->bovinos()->attach($detalle['id_bovino'], [
-                    'precio_fijo' => $detalle['precio_fijo'],
-                    'precio_kg' => $detalle['precio_kg'],
-                    'destare' => $detalle['destare'],
-                    'rendimiento' => $detalle['rendimiento'],
-                    'kg_peso_vivo' => $detalle['kg_peso_vivo'],
-                    'kg_peso_gancho' => $detalle['kg_peso_gancho'],
-                    'subtotal' => $detalle['subtotal'],
+                    'kg_peso_vivo' => round($detalle['kg_peso_vivo'], 2),
+                    'kg_peso_gancho' => round($detalle['kg_peso_gancho'], 2),
+                    'subtotal' => round($detalle['subtotal'], 2),
                     'observacion' => $detalle['observacion'] ?? null,
                 ]);
 
@@ -298,23 +311,25 @@ class VentaController extends Controller
                 $bovino->save();
             }
 
-            // Insertar nuevos pagos
-            foreach ($request->pagos as $pago) {
-                if ($pago['id_pago'] == '0') {
-                    $p = new Pago();
-                    $p->id_venta = $venta->id_venta;
-                    $p->monto = $pago['monto'];
-                    $p->tipo_pago = $pago['tipo_pago'];
-                    $p->fecha_pago = $pago['fecha_pago'];
-                    $p->save();
-                } else {
-                    $p = Pago::find($pago['id_pago']);
-                    $p->monto = $pago['monto'];
-                    $p->tipo_pago = $pago['tipo_pago'];
-                    $p->fecha_pago = $pago['fecha_pago'];
-                    $p->fecha_registro = now();
-                    $p->modificado_por = session('id_usuario');
-                    $p->save();
+            // Insertar nuevos pagos si existen
+            if (!empty($request->pagos)) {
+                foreach ($request->pagos as $pago) {
+                    if ($pago['id_pago'] == '0') {
+                        $p = new Pago();
+                        $p->id_venta = $venta->id_venta;
+                        $p->monto = round($pago['monto'], 2);
+                        $p->tipo_pago = $pago['tipo_pago'];
+                        $p->fecha_pago = $pago['fecha_pago'];
+                        $p->save();
+                    } else {
+                        $p = Pago::find($pago['id_pago']);
+                        $p->monto = round($pago['monto'], 2);
+                        $p->tipo_pago = $pago['tipo_pago'];
+                        $p->fecha_pago = $pago['fecha_pago'];
+                        $p->fecha_registro = now();
+                        $p->modificado_por = session('id_usuario');
+                        $p->save();
+                    }
                 }
             }
 

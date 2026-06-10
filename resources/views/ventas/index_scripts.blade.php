@@ -23,6 +23,7 @@
                     d.estado = $("#busqueda-estado").val();
                     d.creado_por = $("#busqueda-creado_por").val();
                     d.id_cliente = $("#busqueda-id_cliente").val();
+                    d.tipo_precio = $("#busqueda-tipo_precio").val();
                 },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -44,6 +45,24 @@
                     }
                 },
                 {
+                    data: "concepto",
+                    render: function(data, type, row) {
+                        return data || '-';
+                    }
+                },
+                {
+                    data: "tipo_precio",
+                    render: function(data, type, row) {
+                        if (data === 'precio_fijo') {
+                            return '<span class="badge bg-success">Precio fijo</span>';
+                        } else if (data === 'precio_kg') {
+                            return `<span class="badge bg-primary">Precio por kg</span><br>(${row.precio_kg} Bs./kg)<br>Destare: ${row.destare} % <br>Rendimiento: ${row.rendimiento} %`;
+                        } else {
+                            return '-';
+                        }
+                    }
+                },
+                {
                     data: "bovinos",
                     render: function(data, type, row) {
                         if (!data || data.length === 0) {
@@ -53,11 +72,11 @@
                         return data.map((bovino, index) => {
                             const carimbo = new Date(bovino.fecha_nacimiento)
                                 .getFullYear();
-                            const tipoPrecio = bovino.pivot.precio_fijo > 0 ?
-                                "Precio fijo" : "Precio por kg";
+                                // Si el tipo de venta es por kg, mostrar el peso del bovino
+                                const peso = bovino.pivot.kg_peso_vivo > 0 ? ` (${bovino.pivot.kg_peso_vivo} kg vivo | ${bovino.pivot.kg_peso_gancho} kg gancho)` : '';
                             return `
                                 <b>
-                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> a <span class="text-success">${bovino.pivot.subtotal} Bs.</span> <span class="text-muted">(${tipoPrecio})</span>
+                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> ${peso} a <span class="text-success">${bovino.pivot.subtotal} Bs.</span>
                                 </b>
                                 `;
                         }).join("<br>");
@@ -153,7 +172,7 @@
                     render: function(data, type, row) {
                         return `
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('ventas.index') }}/${row.id_venta}/editar" class="btn btn-warning btn-sm btn-editar" data-toggle="tooltip" title="Editar" target="_blank" rel="noopener noreferrer">
+                                    <a href="{{ route('ventas.index') }}/${row.id_venta}/editar" class="btn btn-warning btn-sm btn-editar" data-toggle="tooltip" title="Editar">
                                         <i class="fa-duotone fa-solid fa-edit"></i>
                                     </a>
                                     <a class="btn {{ session('tema_preferido') == 'dark' ? 'btn-light' : 'btn-dark' }} btn-sm"
@@ -171,7 +190,7 @@
                     width: '120px',
                 },
                 {
-                    targets: [2, 3, 5],
+                    targets: [4, 5, 7],
                     width: '300px',
                 },
             ],

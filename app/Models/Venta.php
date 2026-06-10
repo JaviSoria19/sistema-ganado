@@ -25,7 +25,7 @@ class Venta extends Model
             'ventas_detalles',       /* Tabla pivote */
             'id_venta',              /* FK en la tabla pivote hacia ventas */
             'id_bovino'              /* FK en la tabla pivote hacia bovinos */
-        )->withPivot('precio_fijo', 'precio_kg', 'destare', 'rendimiento', 'kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
+        )->withPivot('kg_peso_vivo', 'kg_peso_gancho', 'subtotal', 'observacion');
     }
 
     /** Relación uno a muchos con pagos */
@@ -95,6 +95,10 @@ class Venta extends Model
 
         if ($filters['id_cliente']) {
             $query->where('id_cliente', $filters['id_cliente']);
+        }
+
+        if ($filters['tipo_precio']) {
+            $query->where('tipo_precio', $filters['tipo_precio']);
         }
 
         return $query->get();
