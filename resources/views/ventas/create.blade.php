@@ -6,6 +6,11 @@
             <i class="fa-solid fa-cart-plus me-2"></i>{{ $head_title }}
         </h1>
 
+        <div class="mb-3">
+            <input type="file" class="form-control" id="excel-file" accept=".xlsx, .xls">
+            <div class="form-text">Puedes ingresar un archivo Excel para importar ventas, solo se permiten archivos .xlsx y .xls</div>
+        </div>
+
         <div class="row g-3">
 
             {{-- ════ COLUMNA PRINCIPAL ════ --}}

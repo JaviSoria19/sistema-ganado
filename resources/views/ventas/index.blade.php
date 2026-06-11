@@ -30,10 +30,10 @@
                 <th>Concepto</th>
                 <th>Tipo de precio</th>
                 <th>Bovinos</th>
-                <th>Total</th>
-                <th>Pagos</th>
-                <th>Total pagado</th>
-                <th>Saldo</th>
+                <th>Total (Bs.)</th>
+                <th>Pagos (Bs.)</th>
+                <th>Total pagado (Bs.)</th>
+                <th>Saldo (Bs.)</th>
 
                 <th>Estado</th>
                 <th>F. Registro</th>

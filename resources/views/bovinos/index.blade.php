@@ -36,6 +36,7 @@
                 <th>#</th>
                 <th>Carimbo</th> <!-- Generado con datatables según el año de nacimiento ✅ -->
                 <th>Identificador</th>
+                <th>Id sistema</th>
                 <th>Potrero</th>
                 <th>Entore</th>
                 <th>Padre</th>

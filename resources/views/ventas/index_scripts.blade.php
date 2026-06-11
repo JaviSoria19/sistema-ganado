@@ -76,7 +76,7 @@
                                 const peso = bovino.pivot.kg_peso_vivo > 0 ? ` (${bovino.pivot.kg_peso_vivo} kg vivo | ${bovino.pivot.kg_peso_gancho} kg gancho)` : '';
                             return `
                                 <b>
-                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> ${peso} a <span class="text-success">${bovino.pivot.subtotal} Bs.</span>
+                                    <span class="text-primary">${index + 1}.</span> C: ${carimbo} <span class="text-danger">${bovino.identificador}</span> ${peso} a <span class="text-success">${bovino.pivot.subtotal}</span>
                                 </b>
                                 `;
                         }).join("<br>");
@@ -85,7 +85,7 @@
                 {
                     data: "total",
                     render: function(data, type, row) {
-                        return `<b class="text-success">${data} Bs.</b>`;
+                        return `<b class="text-success">${data}</b>`;
                     }
                 },
                 {
@@ -96,21 +96,20 @@
                         }
 
                         return data.map((pago, index) =>
-                            `<b class="text-primary">${index + 1}.</b> <b class="text-success">${pago.monto} Bs.</b> - <b>${pago.tipo_pago}</b> en fecha ${new Date(pago.fecha_pago).toLocaleDateString()}`
+                            `<b class="text-primary">${index + 1}.</b> <b class="text-success">${pago.monto}</b> - <b>${pago.tipo_pago}</b> en fecha ${new Date(pago.fecha_pago).toLocaleDateString()}`
                         ).join("<br>");
                     }
                 },
                 {
                     data: "total_pagado",
                     render: function(data, type, row) {
-                        return `<b class="text-success">${data} Bs.</b>`;
+                        return `<b class="text-success">${data}</b>`;
                     }
                 },
                 {
                     data: "saldo",
                     render: function(data, type, row) {
-                        return data <= 0 ? `<b class="text-success">${data} Bs.</b>` :
-                            `<b class="text-warning">${data} Bs.</b>`;
+                        return data <= 0 ? `<b class="text-success">${data}</b>` : `<b class="text-warning">${data}</b>`;
                     }
                 },
                 {
@@ -190,7 +189,7 @@
                     width: '120px',
                 },
                 {
-                    targets: [4, 5, 7],
+                    targets: [2, 3, 4, 5, 7],
                     width: '300px',
                 },
             ],

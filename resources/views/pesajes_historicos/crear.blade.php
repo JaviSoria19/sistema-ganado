@@ -13,7 +13,7 @@
         <input type="file" class="form-control" id="excel-file" accept=".xlsx, .xls">
     </div>
     
-    <p>Importante: subir un archivo excel con las siguientes columnas: <strong>Carimbo</strong>, <strong>Identificador</strong>, <strong>Peso</strong> y <strong>Fecha</strong>. El sistema validará que el formato sea correcto y que los datos correspondan a bovinos existentes en el sistema. En caso de encontrar errores, se indicará la fila y el motivo del error para su corrección.</p>
+    <p>Importante: subir un archivo excel con las siguientes cinco columnas: <strong>Nro.</strong>, <strong>Carimbo</strong>, <strong>Identificador</strong>, <strong>Peso</strong> y <strong>Fecha</strong>. El sistema validará que el formato sea correcto y que los datos correspondan a bovinos existentes en el sistema. En caso de encontrar errores, se indicará la fila y el motivo del error para su corrección.</p>
 
     <p>Se recomienda subir primero el archivo antes de asignar filas manualmente</p>
 

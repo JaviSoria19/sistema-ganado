@@ -130,6 +130,9 @@
                     data: "identificador",
                 },
                 {
+                    data: "id_bovino",
+                },
+                {
                     data: "potrero.nombre",
                 },
                 {
@@ -444,7 +447,7 @@
                 }
             ],
             columnDefs: [{
-                targets: [2, 3],
+                targets: [2, 4],
                 width: '200px',
             }, ],
             responsive: false,

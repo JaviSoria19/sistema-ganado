@@ -111,39 +111,56 @@ class Venta extends Model
 
     public function dashboard_get_estadisticas_ventas()
     {
-        $fechas = [
-            'hoy' => [Carbon::today(), Carbon::today()->endOfDay()],
-            'semana' => [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()],
-            'mes' => [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()],
+        $hoy = Carbon::today();
+
+        $periodos = [
+            'hoy'    => [$hoy->copy(),                    $hoy->copy()->endOfDay()],
+            'semana' => [$hoy->copy()->startOfWeek(),     $hoy->copy()->endOfWeek()],
+            'mes'    => [$hoy->copy()->startOfMonth(),    $hoy->copy()->endOfMonth()],
         ];
 
         $resultados = [];
 
-        foreach ($fechas as $periodo => [$inicio, $fin]) {
-            // Query base para ventas (sin join)
-            $ventasBase = DB::table('ventas as v')
-                ->where('v.estado', 'activo')
-                ->whereBetween('v.fecha_venta', [$inicio, $fin]);
+        foreach ($periodos as $periodo => [$inicio, $fin]) {
 
-            // Cantidad de ventas e ingresos (sin join para evitar duplicados)
-            $estadisticasVentas = (clone $ventasBase)
-                ->select(
-                    DB::raw('COUNT(DISTINCT v.id_venta) as cantidad'),
-                    DB::raw('SUM(v.total - (SELECT COALESCE(SUM(p.monto), 0) FROM pagos p WHERE p.id_venta = v.id_venta AND p.estado = "activo")) as ingresos')
-                )
+            // Ventas activas en el rango
+            $ventas = DB::table('ventas as v')
+                ->where('v.estado', 'activo')
+                ->whereBetween('v.fecha_venta', [
+                    $inicio->toDateString(),
+                    $fin->toDateString(),
+                ]);
+
+            // Cantidad de ventas y suma de totales brutos
+            $stats = (clone $ventas)
+                ->selectRaw('COUNT(*) as cantidad, COALESCE(SUM(total), 0) as total_bruto')
                 ->first();
 
-            // Bovinos vendidos (con join solo para este cálculo)
+            // Pagos recibidos solo para esas ventas
+            $totalPagado = DB::table('pagos as p')
+                ->join('ventas as v', 'p.id_venta', '=', 'v.id_venta')
+                ->where('v.estado', 'activo')
+                ->where('p.estado', 'activo')
+                ->whereBetween('v.fecha_venta', [
+                    $inicio->toDateString(),
+                    $fin->toDateString(),
+                ])
+                ->sum('p.monto');
+
+            // Bovinos vendidos en esas ventas
             $bovinosVendidos = DB::table('ventas_detalles as vd')
                 ->join('ventas as v', 'vd.id_venta', '=', 'v.id_venta')
                 ->where('v.estado', 'activo')
-                ->whereBetween('v.fecha_venta', [$inicio, $fin])
-                ->count('vd.id_bovino');
+                ->whereBetween('v.fecha_venta', [
+                    $inicio->toDateString(),
+                    $fin->toDateString(),
+                ])
+                ->count();
 
             $resultados[$periodo] = [
-                'cantidadVentas' => $estadisticasVentas->cantidad ?? 0,
-                'ingresos' => $estadisticasVentas->ingresos ?? 0,
-                'bovinosVendidos' => $bovinosVendidos ?? 0,
+                'cantidadVentas'  => (int) $stats->cantidad,
+                'ingresos'        => (float) $totalPagado,
+                'bovinosVendidos' => (int) $bovinosVendidos,
             ];
         }
 
@@ -152,20 +169,27 @@ class Venta extends Model
 
     public function dashboard_get_clientes_con_saldo()
     {
-        return Venta::select(
-            'usuarios.usuario',
-            'clientes.id_cliente',
-            'clientes.nombre',
-            'clientes.celular',
-            'clientes.estancia',
-            DB::raw('SUM(ventas.total - (SELECT COALESCE(SUM(p.monto), 0) FROM pagos p WHERE p.id_venta = ventas.id_venta AND p.estado = "activo")) as saldoPendiente'),
-            DB::raw('MIN(ventas.fecha_venta) as fechaMasAntigua')
-        )
-            ->join('clientes', 'ventas.id_cliente', '=', 'clientes.id_cliente')
-            ->join('usuarios', 'ventas.creado_por', '=', 'usuarios.id_usuario')
-            ->where('ventas.estado', 'activo')
-            ->having('saldoPendiente', '>', 0)
-            ->groupBy('clientes.id_cliente', 'clientes.nombre', 'clientes.celular')
+        $pagosSubquery = DB::table('pagos as p')
+            ->selectRaw('p.id_venta, COALESCE(SUM(p.monto), 0) as total_pagado')
+            ->where('p.estado', 'activo')
+            ->groupBy('p.id_venta');
+
+        return DB::table('ventas as v')
+            ->select(
+                'u.usuario',
+                'c.id_cliente',
+                'c.nombre',
+                'c.celular',
+                'c.estancia',
+                DB::raw('SUM(v.total - COALESCE(pag.total_pagado, 0)) as saldoPendiente'),
+                DB::raw('MIN(v.fecha_venta) as fechaMasAntigua')
+            )
+            ->join('clientes as c', 'v.id_cliente', '=', 'c.id_cliente')
+            ->join('usuarios as u', 'v.creado_por', '=', 'u.id_usuario')
+            ->leftJoinSub($pagosSubquery, 'pag', 'pag.id_venta', '=', 'v.id_venta')
+            ->where('v.estado', 'activo')
+            ->groupBy('c.id_cliente', 'c.nombre', 'c.celular', 'c.estancia', 'u.usuario')
+            ->havingRaw('SUM(v.total - COALESCE(pag.total_pagado, 0)) > 0')
             ->orderByDesc('saldoPendiente')
             ->get();
     }
