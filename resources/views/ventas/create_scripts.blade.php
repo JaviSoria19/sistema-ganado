@@ -53,6 +53,25 @@
         });
     }
 
+    function excelDateToJS(excelDate) {
+
+        if (!excelDate) return '';
+
+        if (typeof excelDate === 'string') {
+            return excelDate.substring(0, 10);
+        }
+
+        const date = XLSX.SSF.parse_date_code(excelDate);
+
+        return `${date.y}-${String(date.m).padStart(2,'0')}-${String(date.d).padStart(2,'0')}`;
+    }
+
+    function normalizarTexto(valor) {
+        return String(valor ?? '')
+            .trim()
+            .toLowerCase();
+    }
+
     /* ═══════════════════════════════════════════════════════
        TIPO DE PRECIO GLOBAL
        Cuando cambia, re-renderiza thead y todos los bovinos
@@ -629,9 +648,285 @@
         }
     });
 
+
+    async function obtenerOCrearCliente(nombre, celular, estancia) {
+        if (!nombre) return null;
+
+        // 1. Buscar en el estado local
+        let cliente = STATE.clientes.find(c =>
+            normalizarTexto(c.nombre) === normalizarTexto(nombre)
+        );
+
+        if (cliente) {
+            return cliente.id_cliente;
+        }
+
+        const url = "{{ route('clientes.create') }}";
+        const type = 'POST';
+
+        // 2. Envolver el AJAX en un bloque try/catch con await
+        try {
+            const response = await $.ajax({
+                url: url,
+                type: type,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    "nombre": nombre,
+                    "celular": celular,
+                    "estancia": estancia
+                }
+            });
+
+            if (response.success) {
+                Swal.fire('Éxito', response.message, 'success');
+                console.log(response);
+
+                await cargarClientes();
+
+                return response.cliente.id_cliente;
+            } else {
+                Swal.fire('Error', response.message, 'error');
+                return null;
+            }
+
+        } catch (xhr) {
+            let respuesta = {};
+            try {
+                respuesta = JSON.parse(xhr.responseText);
+            } catch (e) {
+                respuesta = {
+                    message: "Error desconocido"
+                };
+            }
+
+            let htmlError = "";
+
+            if (respuesta.errors) {
+                htmlError = Object.values(respuesta.errors).flat().join("<br>");
+            } else if (respuesta.message) {
+                htmlError = respuesta.message;
+            } else {
+                htmlError = "Ocurrió un error inesperado.";
+            }
+
+            Swal.fire({
+                theme: localStorage.getItem('theme') || 'dark',
+                title: 'Error',
+                html: 'Ocurrió un error al intentar la acción: <br>' + htmlError,
+                icon: 'error'
+            });
+
+            return null;
+        }
+    }
+
+    async function importarVentaExcel(file) {
+
+        const buffer = await file.arrayBuffer();
+
+        const workbook = XLSX.read(buffer, {
+            type: 'array'
+        });
+
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        const rows = XLSX.utils.sheet_to_json(sheet, {
+            defval: null
+        });
+
+        if (!rows.length) {
+            showAlert('El archivo no contiene datos.', 'warning');
+            return;
+        }
+
+        const filaBase = rows[0];
+
+        try {
+
+            /* ======================================
+               CLIENTE
+            ====================================== */
+
+            const idCliente = await obtenerOCrearCliente(
+                filaBase['Cliente'],
+                filaBase['Celular'],
+                filaBase['Estancia']
+            );
+
+            $('#select-cliente')
+                .val(idCliente)
+                .trigger('change');
+
+            /* ======================================
+               DATOS VENTA
+            ====================================== */
+
+            document.getElementById('input-concepto').value =
+                filaBase['Concepto'] ?? '';
+
+            document.getElementById('fecha-venta').value =
+                excelDateToJS(filaBase['Fecha de venta']);
+
+            const tipoVenta =
+                normalizarTexto(filaBase['Tipo de venta']);
+
+            STATE.tipo_precio =
+                tipoVenta.includes('kg') ?
+                'precio_kg' :
+                'precio_fijo';
+
+            document.getElementById('select-tipo-precio').value =
+                STATE.tipo_precio;
+
+            document
+                .getElementById('select-tipo-precio')
+                .dispatchEvent(new Event('change'));
+
+            STATE.destare =
+                parseFloat(filaBase['Destare % (Precio por kg)']) || 0;
+
+            STATE.rendimiento =
+                parseFloat(filaBase['Rendimiento % (Precio por kg)']) || 0;
+
+            STATE.precio_kg =
+                parseFloat(filaBase['Precio por kg (Bs.)']) || 0;
+
+            document.getElementById('input-destare').value =
+                STATE.destare;
+
+            document.getElementById('input-rendimiento').value =
+                STATE.rendimiento;
+
+            document.getElementById('input-precio-kg').value =
+                STATE.precio_kg;
+
+            /* ======================================
+               LIMPIAR DATOS ACTUALES
+            ====================================== */
+
+            STATE.bovinos = [];
+            STATE.pagos = [];
+
+            /* ======================================
+               BOVINOS
+            ====================================== */
+
+            rows.forEach(row => {
+
+                const idBovino =
+                    parseInt(row['id_bovino']);
+
+                if (!idBovino || isNaN(idBovino)) {
+                    return;
+                }
+
+                const bovinoSistema =
+                    STATE.listaBovinosActivos.find(
+                        b => b.id_bovino == idBovino
+                    );
+
+                if (!bovinoSistema) {
+                    return;
+                }
+
+                STATE.bovinos.push({
+                    id_bovino: bovinoSistema.id_bovino,
+                    identificador: bovinoSistema.identificador,
+                    genero: bovinoSistema.genero,
+                    potrero: bovinoSistema.potrero?.nombre ?? '—',
+                    carimbo: new Date(
+                        bovinoSistema.fecha_nacimiento
+                    ).getFullYear(),
+                    peso_actual: parseFloat(bovinoSistema.peso_actual) || 0,
+
+                    kg_peso_vivo: parseFloat(row['Peso vivo kg']) ||
+                        parseFloat(bovinoSistema.peso_actual) ||
+                        0,
+
+                    kg_peso_gancho: parseFloat(row['Peso gancho']) || 0,
+
+                    subtotal: parseFloat(row['Subtotal']) || 0,
+
+                    observacion: row['Observación'] ||
+                        row['Observacion'] ||
+                        '',
+                });
+            });
+
+            /* ======================================
+               PAGOS
+            ====================================== */
+
+            rows.forEach(row => {
+
+                if (!row['Tipo de pago']) {
+                    return;
+                }
+
+                const monto =
+                    parseFloat(row['Monto']) || 0;
+
+                if (monto <= 0) {
+                    return;
+                }
+
+                STATE.pagos.push({
+                    tipo_pago: row['Tipo de pago'],
+                    monto,
+                    fecha_pago: excelDateToJS(row['Fecha pago'])
+                });
+            });
+
+            actualizarSelectBovino();
+            renderThead();
+            renderBovinos();
+            renderPagos();
+            recalcularTotales();
+
+            showAlert(
+                `Importación completada. Se cargaron ${STATE.bovinos.length} bovinos.`,
+                'success'
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            showAlert(
+                error.message ||
+                'Error al importar el archivo.',
+                'danger'
+            );
+        }
+    }
+
     /* ═══════════════════════════════════════════════════════
        INIT
     ═══════════════════════════════════════════════════════ */
+
+    document
+        .getElementById('excel-file')
+        .addEventListener('change', async function(e) {
+
+            const file = e.target.files[0];
+
+            if (!file) return;
+
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+
+                showAlert(
+                    'Seleccione un archivo Excel válido.',
+                    'warning'
+                );
+
+                return;
+            }
+
+            await importarVentaExcel(file);
+        });
+
     (async () => {
         await cargarBovinos();
         await cargarClientes();
