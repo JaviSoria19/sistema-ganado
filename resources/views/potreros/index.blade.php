@@ -21,6 +21,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Id potrero</th>
                 <th>Potrero</th>
                 <th>Ubicación</th>
                 <th>Superficie (ha)</th>

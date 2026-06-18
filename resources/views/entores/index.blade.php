@@ -24,6 +24,7 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Id entore</th>
                 <th>Tipo de entore</th>
                 <th>Fecha inicio</th>
                 <th>Fecha fin</th>

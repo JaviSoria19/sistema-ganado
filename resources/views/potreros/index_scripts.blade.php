@@ -19,6 +19,9 @@
                     }
                 },
                 {
+                    data: "id_potrero",
+                },
+                {
                     data: "nombre",
                 },
                 {

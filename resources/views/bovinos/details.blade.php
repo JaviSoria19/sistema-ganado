@@ -220,11 +220,13 @@
         $estado = match ($bovino->estado) {
             'inactivo' => 'ARCHIVADO',
             'activo' => 'ACTIVO',
+            'vendido' => 'VENDIDO',
             default => 'DESCONOCIDO',
         };
         $class = match ($bovino->estado) {
             'inactivo' => 'alert alert-secondary',
             'activo' => 'alert alert-success',
+            'vendido' => 'alert alert-danger',
             default => 'alert alert-secondary',
         };
     @endphp
@@ -431,9 +433,11 @@
                 <tr>
                     <th>#</th>
                     <th>ID Venta</th>
-                    <th>Precio fijo ($)</th>
-                    <th>Precio/kg ($)</th>
-                    <th>Destare</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Concepto</th>
+                    <th>Tipo precio</th>
+                    <th>Destare (%)</th>
                     <th>Rendimiento (%)</th>
                     <th>Kg peso vivo</th>
                     <th>Kg peso gancho</th>
@@ -445,24 +449,60 @@
                 @foreach ($bovino->ventas as $venta)
                     <tr>
                         <td>{{ $loop->index + 1 }}</td>
-                        <td>{{ $venta->id_venta }}</td>
-                        <td>{{ $venta->pivot->precio_fijo }}</td>
-                        <td>{{ $venta->pivot->precio_kg }}</td>
-                        <td>{{ $venta->pivot->destare }}</td>
-                        <td>{{ $venta->pivot->rendimiento }}</td>
-                        <td>{{ $venta->pivot->kg_peso_vivo }}</td>
-                        <td>{{ $venta->pivot->kg_peso_gancho }}</td>
-                        <td class="fw-bold text-success">{{ $venta->pivot->subtotal }}</td>
-                        <td>{{ $venta->pivot->observacion }}</td>
+                        <td>
+                            <a href="{{ route('ventas.imprimir', $venta->id_venta) }}" class="text-info">
+                                #{{ $venta->id_venta }}
+                            </a>
+                        </td>
+                        <td>{{ date('d/m/Y', strtotime($venta->fecha_venta)) }}</td>
+                        <td>{{ $venta->cliente->nombre ?? '—' }}</td>
+                        <td>{{ $venta->concepto }}</td>
+                        <td>
+                            @if ($venta->tipo_precio === 'precio_fijo')
+                                <span class="badge bg-primary">Precio fijo</span>
+                            @else
+                                <span class="badge bg-warning text-dark">Precio/kg</span>
+                            @endif
+                        </td>
+                        {{-- Destare y rendimiento solo aplican cuando es precio_kg --}}
+                        <td>
+                            @if ($venta->tipo_precio === 'precio_kg')
+                                {{ $venta->destare }} %
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if ($venta->tipo_precio === 'precio_kg')
+                                {{ $venta->rendimiento }} %
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        {{-- kg_peso_vivo y kg_peso_gancho vienen del pivot (ventas_detalles) --}}
+                        <td>
+                            @if ($venta->tipo_precio === 'precio_kg' && $venta->pivot->kg_peso_vivo > 0)
+                                {{ $venta->pivot->kg_peso_vivo }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if ($venta->tipo_precio === 'precio_kg' && $venta->pivot->kg_peso_gancho > 0)
+                                {{ $venta->pivot->kg_peso_gancho }}
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td class="fw-bold text-success">{{ number_format($venta->pivot->subtotal, 2) }}</td>
+                        <td>{{ $venta->pivot->observacion ?? '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="8" class="text-end">Total vendido:</th>
-                    <th class="fw-bold text-success">
-                        {{ $bovino->ventas->sum('pivot.subtotal') }}
-                    </th>
+                    <th colspan="10" class="text-end">Total vendido:</th>
+                    <th class="fw-bold text-success">{{ number_format($bovino->ventas->sum('pivot.subtotal'), 2) }}</th>
                     <th></th>
                 </tr>
             </tfoot>

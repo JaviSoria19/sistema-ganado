@@ -192,6 +192,9 @@
                     }
                 },
                 {
+                    data: "id_entore",
+                },
+                {
                     data: "tipo_entore",
                     render: function(data) {
                         const map = {
