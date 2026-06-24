@@ -23,6 +23,6 @@ class Parametro extends Model
     
     public function get_parametro()
     {
-        return Parametro::with('modificado')->find(1);
+        return Parametro::with('modificado')->findOrFail(1);
     }
 }

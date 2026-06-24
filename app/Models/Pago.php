@@ -44,6 +44,6 @@ class Pago extends Model
     
     public function get_pago_venta($id_pago)
     {
-        return Pago::with('venta','creado','modificado','eliminado')->find($id_pago);
+        return Pago::with('venta','creado','modificado','eliminado')->findOrFail($id_pago);
     }
 }

@@ -120,6 +120,6 @@ class Bovino extends Model
 
     public function get_bovino($id_bovino)
     {
-        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'palpaciones_historicas', 'ventas', 'creado', 'modificado', 'eliminado')->find($id_bovino);
+        return Bovino::with('potrero', 'entore', 'padre', 'madre', 'entores_como_hembra', 'entores_como_macho', 'recuentos_historicos', 'pesajes_historicos', 'palpaciones_historicas', 'ventas', 'creado', 'modificado', 'eliminado')->findOrFail($id_bovino);
     }
 }

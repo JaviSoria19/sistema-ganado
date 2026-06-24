@@ -49,6 +49,6 @@ class CapacidadHistorica extends Model
     
     public function get_capacidad_historica($id_capacidad_historica)
     {
-        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->find($id_capacidad_historica);
+        return CapacidadHistorica::with('potrero', 'creado', 'modificado', 'eliminado')->findOrFail($id_capacidad_historica);
     }
 }

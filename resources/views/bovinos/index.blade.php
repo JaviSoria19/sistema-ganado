@@ -6,6 +6,9 @@
     <button type="button" class="btn btn-success mb-3 btn-crear" data-bs-toggle="modal" data-bs-target="#modal-formulario">
         <i class="fa-solid fa-duotone fa-plus"></i> Crear bovino</button>
 
+    <a class="btn btn-success mb-3" href="{{ route('bovinos.importar') }}">
+        <i class="fa-solid fa-duotone fa-file-import"></i> Importar bovinos</a>
+
     <a class="btn btn-primary mb-3" href="{{ route('pesajes-historicos.index') }}">
         <i class="fa-solid fa-duotone fa-weight-scale"></i> Pesajes históricos</a>
 

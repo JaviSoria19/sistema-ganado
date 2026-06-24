@@ -49,6 +49,6 @@ class RecuentoHistorico extends Model
 
     public function get_recuento_historico($id_recuento_historico)
     {
-        return RecuentoHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->find($id_recuento_historico);
+        return RecuentoHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->findOrFail($id_recuento_historico);
     }
 }

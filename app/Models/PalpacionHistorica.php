@@ -49,6 +49,6 @@ class PalpacionHistorica extends Model
 
     public function get_palpacion_historica($id_palpacion_historica)
     {
-        return PalpacionHistorica::with('bovino', 'creado', 'modificado', 'eliminado')->find($id_palpacion_historica);
+        return PalpacionHistorica::with('bovino', 'creado', 'modificado', 'eliminado')->findOrFail($id_palpacion_historica);
     }
 }

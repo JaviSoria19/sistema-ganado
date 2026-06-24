@@ -49,6 +49,6 @@ class PesajeHistorico extends Model
 
     public function get_pesaje_historico($id_pesaje_historico)
     {
-        return PesajeHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->find($id_pesaje_historico);
+        return PesajeHistorico::with('bovino', 'creado', 'modificado', 'eliminado')->findOrFail($id_pesaje_historico);
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BovinoValidation;
 use App\Models\Bovino;
 use App\Models\Potrero;
-use App\Models\Entore;
 use App\Models\PesajeHistorico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +26,20 @@ class BovinoController extends Controller
         ]);
     }
 
+    public function view_importar()
+    {
+        if (!session('tiene_acceso')) {
+            return redirect()->route('login');
+        }
+
+        $potreros = (new Potrero())->get_all_potreros();
+
+        return view('bovinos.importar', [
+            'head_title' => 'IMPORTAR BOVINOS',
+            'potreros' => $potreros
+        ]);
+    }
+
     public function view_details($bovino)
     {
         if (!session('tiene_acceso')) {
@@ -38,7 +51,7 @@ class BovinoController extends Controller
         $carimbo = date('Y', strtotime($bovino->fecha_nacimiento));
 
         return view('bovinos.details', [
-            'head_title' => "BOVINO: C{$carimbo} {$bovino->identificador}" ,
+            'head_title' => "BOVINO: C{$carimbo} {$bovino->identificador}",
             'bovino' => $bovino,
         ]);
     }
@@ -146,7 +159,7 @@ class BovinoController extends Controller
         ]);
     }
 
-    public function create_transaction(Request $request)
+    public function import(Request $request)
     {
         if (!session('tiene_acceso')) {
             return response()->json(['success' => false, 'message' => 'No tiene acceso'], 403);
@@ -263,9 +276,9 @@ class BovinoController extends Controller
                 'message' => 'No se puede modificar un bovino que fue vendido.'
             ], 400);
         }
-        
+
         // Si el peso actual ha cambiado, se registra un nuevo registro en la tabla de pesaje histórica.
-        if($bovino->peso_actual != $request->peso_actual) {
+        if ($bovino->peso_actual != $request->peso_actual) {
             $pesaje_historico = new PesajeHistorico();
             $pesaje_historico->id_bovino = $bovino->id_bovino;
             $pesaje_historico->peso = $request->peso_actual;

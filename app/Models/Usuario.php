@@ -39,7 +39,7 @@ class Usuario extends Authenticatable
 
     public function get_usuario(int $id_usuario)
     {
-        return Usuario::with('creado', 'modificado', 'eliminado')->find($id_usuario);
+        return Usuario::with('creado', 'modificado', 'eliminado')->findOrFail($id_usuario);
     }
 
     /**Función utilizada para verificar y crear la sesión del Usuario.*/

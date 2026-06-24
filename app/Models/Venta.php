@@ -106,7 +106,7 @@ class Venta extends Model
 
     public function get_venta($id_venta)
     {
-        return Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->find($id_venta);
+        return Venta::with('bovinos', 'pagos', 'cliente', 'creado', 'modificado', 'eliminado')->findOrFail($id_venta);
     }
 
     public function dashboard_get_estadisticas_ventas()

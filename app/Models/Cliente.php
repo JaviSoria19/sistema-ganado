@@ -38,6 +38,6 @@ class Cliente extends Model
 
     public function get_cliente($id_cliente)
     {
-        return Cliente::with('creado', 'modificado', 'eliminado')->find($id_cliente);
+        return Cliente::with('creado', 'modificado', 'eliminado')->findOrFail($id_cliente);
     }
 }

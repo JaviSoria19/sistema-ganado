@@ -56,6 +56,6 @@ class Potrero extends Model
 
     public function get_potrero($id_potrero)
     {
-        return Potrero::with('capacidades_historicas', 'bovinos', 'creado', 'modificado', 'eliminado')->find($id_potrero);
+        return Potrero::with('capacidades_historicas', 'bovinos', 'creado', 'modificado', 'eliminado')->findOrFail($id_potrero);
     }
 }
